@@ -109,6 +109,27 @@ function showAlert(msg) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
+    // Se abbiamo un token salvato, verifichiamo che il server lo riconosca ancora
+    // (es. dopo un riavvio del server su Render free tier)
+    if (token) {
+        try {
+            const res = await fetch("/auth/verify", { headers: { "Authorization": token } });
+            if (!res.ok) {
+                // Token non più valido — puliamo e mostriamo login
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                token       = null;
+                currentUser = null;
+            } else {
+                // Aggiorna i dati utente freschi dal server
+                const fresh = await res.json();
+                currentUser = { ...currentUser, ...fresh };
+                localStorage.setItem("user", JSON.stringify(currentUser));
+            }
+        } catch {
+            // Server non raggiungibile — manteniamo lo stato locale
+        }
+    }
     t = await translateAll(currentLang);
     applyStaticTranslations();
     updateUI();

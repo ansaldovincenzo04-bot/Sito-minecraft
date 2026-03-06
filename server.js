@@ -61,6 +61,14 @@ app.post("/register", upload.single("profileImage"), async (req, res) => {
 });
 
 
+// Verifica token ancora valido (usato al caricamento pagina)
+app.get("/auth/verify", auth, (req, res) => {
+  const users = read(usersPath);
+  const user  = users.find(u => u.username === req.user.username);
+  if (!user) return res.status(401).send("Utente non trovato");
+  res.json({ username: user.username, profileImage: user.profileImage });
+});
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(401).send("Inserisci tutti i dati");
