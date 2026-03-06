@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Hunters Universe</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- MOBILE BOTTOM NAV -->
+    <div class="mobile-nav" id="mobileNav">
+        <button class="mobile-nav-btn" id="mobileNavProfile" onclick="toggleMobileSidebar('left')">
+            <span class="mobile-nav-icon">👤</span>
+            <span class="mobile-nav-label">Profilo</span>
+        </button>
+        <button class="mobile-nav-btn active" id="mobileNavFeed" onclick="toggleMobileSidebar('feed')">
+            <span class="mobile-nav-icon">🏠</span>
+            <span class="mobile-nav-label">Home</span>
+        </button>
+        <button class="mobile-nav-btn" id="mobileNavFriends" onclick="toggleMobileSidebar('right')">
+            <span class="mobile-nav-icon">👥</span>
+            <span class="mobile-nav-label">Amici</span>
+        </button>
+    </div>
+
+    <div class="topbar">
+        <div class="logo">HUNTERS UNIVERSE</div>
+        <div id="authArea"></div>
+    </div>
+
+    <div class="container">
+        <aside class="left">
+            <h3 id="label-profile" class="sidebar-header">Profilo</h3>
+            <p id="label-your-imgs" class="sidebar-subheader">Le tue immagini:</p>
+            <div class="sidebar-scrollable"><div id="myPosts"></div></div>
+            <div class="sidebar-footer">
+                <button id="openCreate" class="btn-main">Crea Post</button>
+                <button id="deleteModeBtn" class="btn-alt">Modalità Elimina</button>
+            </div>
+        </aside>
+
+        <main>
+            <div id="posts"></div>
+
+            <!-- POST DETAIL PANEL -->
+            <div id="postDetail" class="post-detail hidden">
+                <div class="post-detail-inner">
+                    <button class="post-detail-close" id="postDetailClose">✕</button>
+                    <div class="post-detail-left">
+                        <div class="post-detail-meta">
+                            <img id="detailAuthorAvatar" src="" class="detail-avatar">
+                            <div>
+                                <div id="detailAuthorName" class="detail-author"></div>
+                                <div id="detailPostDate" class="detail-date"></div>
+                            </div>
+                        </div>
+                        <h2 id="detailPostTitle" class="detail-title"></h2>
+                        <div class="detail-img-wrap">
+                            <img id="detailPostImage" src="" class="detail-img">
+                        </div>
+                    </div>
+                    <div class="post-detail-right">
+                        <div class="comments-header">
+                            <span class="comments-icon">💬</span>
+                            <span id="commentsTitle">Commenti</span>
+                            <div class="sort-toggle" id="sortToggle">
+                                <button class="sort-btn active" id="sortRecent" onclick="setSort('recent')">Recenti</button>
+                                <button class="sort-btn" id="sortPopular" onclick="setSort('popular')">Popolari</button>
+                            </div>
+                        </div>
+                        <div class="comments-list" id="commentsList"></div>
+                        <div class="comment-input-area" id="commentInputArea">
+                            <div class="comment-input-row">
+                                <img id="commentMeAvatar" src="" class="comment-me-avatar">
+                                <div class="comment-input-wrap">
+                                    <textarea id="commentText" class="comment-textarea" placeholder="Scrivi un commento..."></textarea>
+                                    <button id="submitComment" class="comment-submit-btn">Pubblica</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="commentLoginMsg" class="comment-login-msg hidden">
+                            Accedi per commentare
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right">
+            <h3 id="friendsHeader" class="sidebar-header">Amici</h3>
+            <div class="friend-search-wrap">
+                <input type="text" id="friendSearchInput" class="custom-input" placeholder="Cerca username...">
+                <button id="friendSearchBtn" class="btn-main" style="margin-top:6px">Cerca</button>
+            </div>
+            <div class="sidebar-scrollable">
+                <div id="friendsList"></div>
+            </div>
+            <div id="friendRequests"></div>
+        </aside>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal hidden">
+        <div class="card">
+            <h2 id="authTitle">Accedi</h2>
+            <div id="registerPfpContainer" class="pfp-container hidden">
+                <img id="registerPfpPreview" src="/uploads/default-avatar.png" class="pfp-circle-edit">
+                <label for="registerPfpFile" class="pfp-plus-btn">+</label>
+                <input type="file" id="registerPfpFile" style="display:none" accept="image/*">
+            </div>
+            <input type="text" id="authUsername" class="custom-input" placeholder="Username">
+            <input type="password" id="authPassword" class="custom-input" placeholder="Password">
+            <button id="authSubmit" class="btn-main">Entra</button>
+            <p id="authSwitch">Non hai un account? Registrati</p>
+            <button id="cancelAuth" onclick="closeModal('authModal')" class="btn-secondary">Annulla</button>
+        </div>
+    </div>
+
+    <!-- EDIT PROFILE MODAL -->
+    <div id="editProfileModal" class="modal hidden">
+        <div class="card">
+            <h2 id="label-edit-title">Modifica Profilo</h2>
+            <div class="pfp-container">
+                <img id="editPfpPreview" src="/uploads/default-avatar.png" class="pfp-circle-edit">
+                <label for="editPfpFile" class="pfp-plus-btn">+</label>
+                <input type="file" id="editPfpFile" style="display:none" accept="image/*">
+            </div>
+            <input type="text" id="editUsernameInput" class="custom-input" placeholder="Nuovo Username">
+            <button id="submitEditProfile" class="btn-main">Salva Modifiche</button>
+            <button id="cancelEdit" onclick="closeModal('editProfileModal')" class="btn-secondary">Annulla</button>
+        </div>
+    </div>
+
+    <!-- CREATE POST MODAL -->
+    <div id="createModal" class="modal hidden">
+        <div class="card">
+            <h2 id="createPostTitle">Nuovo Post</h2>
+            <input type="text" id="postTitle" class="custom-input" placeholder="Titolo...">
+            <div class="input-group">
+                <input type="text" id="postImageUrl" class="inline-input" placeholder="URL o Nome File...">
+                <label for="postImageFile" class="inline-file-btn">📁</label>
+                <input type="file" id="postImageFile" style="display:none" accept="image/*">
+            </div>
+            <button id="submitPost" class="btn-main">Pubblica</button>
+            <button id="cancelCreate" onclick="closeModal('createModal')" class="btn-secondary">Annulla</button>
+        </div>
+    </div>
+
+    <!-- LOGOUT CONFIRM MODAL -->
+    <div id="logoutConfirmModal" class="modal hidden">
+        <div class="card">
+            <h2 id="logoutConfirmTitle">Sei sicuro?</h2>
+            <button id="yesLogoutBtn" onclick="confirmLogout()" class="btn-main" style="background:#ff4747">Sì, Esci</button>
+            <button id="cancelLogout" onclick="closeModal('logoutConfirmModal')" class="btn-secondary">Annulla</button>
+        </div>
+    </div>
+
+    <!-- ALERT MODAL -->
+    <div id="alertModal" class="modal hidden" style="z-index: 10001;">
+        <div class="card" style="text-align:center; border-color: #ff4747;">
+            <h2 id="alertTitle" style="color: #ff4747;">Attenzione</h2>
+            <p id="alertMessage" style="margin-bottom: 20px;"></p>
+            <button id="alertOkBtn" onclick="closeModal('alertModal')" class="btn-main">OK</button>
+        </div>
+    </div>
+
+    <!-- FRIEND POPOVER -->
+    <div id="friendPopover" class="friend-popover hidden">
+        <button id="popoverViewProfile" class="popover-btn">👤 Vedi Profilo</button>
+        <button id="popoverRemoveFriend" class="popover-btn danger">💔 Rimuovi Amico</button>
+    </div>
+
+    <!-- CONFIRM REMOVE FRIEND MODAL -->
+    <div id="confirmRemoveModal" class="modal hidden">
+        <div class="card" style="text-align:center;">
+            <div style="font-size:36px; margin-bottom:10px;">💔</div>
+            <h2 id="confirmRemoveTitle" style="margin-bottom:8px;">Rimuovi Amico</h2>
+            <p id="confirmRemoveDesc" style="color:#888; font-size:14px; margin-bottom:20px;"></p>
+            <div style="display:flex; gap:10px;">
+                <button id="confirmRemoveYes" class="btn-main" style="background:#ff4747; flex:1;">Sì, Rimuovi</button>
+                <button id="confirmRemoveNo" onclick="closeModal('confirmRemoveModal')" class="btn-secondary" style="flex:1; margin-top:0;">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- USER PROFILE PANEL (inside main, added by JS) -->
+    <div id="userProfilePanel" class="post-detail hidden">
+        <div class="post-detail-inner profile-panel-inner">
+            <button class="post-detail-close" id="profilePanelClose">✕</button>
+            <div class="profile-panel-content">
+                <!-- Header profilo -->
+                <div class="profile-panel-header">
+                    <div class="profile-panel-avatar-wrap">
+                        <img id="profilePanelAvatar" src="" class="profile-panel-avatar">
+                    </div>
+                    <div class="profile-panel-info">
+                        <h1 id="profilePanelUsername" class="profile-panel-name"></h1>
+                        <div class="profile-panel-reactions">
+                            <span class="profile-reaction-badge up">👍 <span id="profileTotalUps">0</span></span>
+                            <span class="profile-reaction-badge down">👎 <span id="profileTotalDowns">0</span></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Post grid -->
+                <p class="profile-panel-posts-label">Post pubblicati</p>
+                <div id="profilePanelPosts" class="profile-posts-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
