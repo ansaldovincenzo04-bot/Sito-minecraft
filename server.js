@@ -7,13 +7,14 @@ const jwt     = require("jsonwebtoken");
 const path    = require("path");
 
 const app    = express();
-const PORT   = 3000;
-const HOST   = '127.0.0.1';
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
 const SECRET = "hunters_universe_secret";
 
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname));       // serve index.html, style.css, script.js dalla root
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
