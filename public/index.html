@@ -12,15 +12,15 @@
     <div class="mobile-nav" id="mobileNav">
         <button class="mobile-nav-btn" id="mobileNavProfile" onclick="toggleMobileSidebar('left')">
             <span class="mobile-nav-icon">👤</span>
-            <span class="mobile-nav-label">Profilo</span>
+            <span class="mobile-nav-label" id="mobileNavLabelProfile">Profilo</span>
         </button>
         <button class="mobile-nav-btn active" id="mobileNavFeed" onclick="toggleMobileSidebar('feed')">
             <span class="mobile-nav-icon">🏠</span>
-            <span class="mobile-nav-label">Home</span>
+            <span class="mobile-nav-label" id="mobileNavLabelFeed">Home</span>
         </button>
         <button class="mobile-nav-btn" id="mobileNavFriends" onclick="toggleMobileSidebar('right')">
             <span class="mobile-nav-icon">👥</span>
-            <span class="mobile-nav-label">Amici</span>
+            <span class="mobile-nav-label" id="mobileNavLabelFriends">Amici</span>
         </button>
     </div>
 
@@ -179,7 +179,7 @@
             <p id="confirmRemoveDesc" style="color:#888; font-size:14px; margin-bottom:20px;"></p>
             <div style="display:flex; gap:10px;">
                 <button id="confirmRemoveYes" class="btn-main" style="background:#ff4747; flex:1;">Sì, Rimuovi</button>
-                <button id="confirmRemoveNo" onclick="closeModal('confirmRemoveModal')" class="btn-secondary" style="flex:1; margin-top:0;">Annulla</button>
+                <button id="cancelRemoveNo" onclick="closeModal('confirmRemoveModal')" class="btn-secondary" style="flex:1; margin-top:0;">Annulla</button>
             </div>
         </div>
     </div>
@@ -203,7 +203,7 @@
                     </div>
                 </div>
                 <!-- Post grid -->
-                <p class="profile-panel-posts-label">Post pubblicati</p>
+                <p class="profile-panel-posts-label" id="profilePostsLabel">Post pubblicati</p>
                 <div id="profilePanelPosts" class="profile-posts-grid"></div>
             </div>
         </div>

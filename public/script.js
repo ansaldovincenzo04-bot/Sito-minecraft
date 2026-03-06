@@ -1,18 +1,25 @@
 // ── STRINGHE BASE (Italiano) ──────────────────────────────────────────────────
 const BASE_STRINGS = {
+    // Sidebar sinistra
     profile:    "Profilo",
     yourImgs:   "Le tue immagini:",
     create:     "Crea Post",
     delete:     "Modalità Elimina",
     confirm:    "Conferma Elimina",
+    // Menu utente
     logout:     "Esci",
     editProfile:"Modifica Profilo",
+    editTitle:  "Modifica Profilo",
     langLabel:  "Lingue",
+    // Auth
     login:      "Entra",
     register:   "Registrati",
     switchReg:  "Non hai un account? Registrati",
     switchLog:  "Hai un account? Accedi",
     logoutTitle:"Sei sicuro?",
+    yesLogout:  "Sì, Esci",
+    regDone:    "Registrazione completata! Ora accedi.",
+    // Amici sidebar
     friends:    "Amici",
     searchPlaceholder: "Cerca username...",
     searchBtn:  "Cerca",
@@ -22,6 +29,19 @@ const BASE_STRINGS = {
     reqWants:   "Vuole essere tuo amico",
     accept:     "Accetta",
     reject:     "Rifiuta",
+    // Popover amico
+    viewProfile:      "👤 Vedi Profilo",
+    removeFriend:     "💔 Rimuovi Amico",
+    removeFriendTitle:"Rimuovi Amico",
+    removeFriendDesc: "Sei sicuro di voler rimuovere",
+    removeFriendDesc2:"dagli amici?",
+    confirmRemoveYes: "Sì, Rimuovi",
+    // Pannello profilo utente
+    postsPublished:   "Post pubblicati",
+    noPosts:          "Nessun post ancora.",
+    // Post feed
+    by:               "Di",
+    // Creazione post
     newPost:    "Nuovo Post",
     titlePlaceholder: "Titolo...",
     urlPlaceholder:   "URL o Nome File...",
@@ -29,20 +49,32 @@ const BASE_STRINGS = {
     cancel:     "Annulla",
     saveProfile:"Salva Modifiche",
     newUsername:"Nuovo Username",
+    insertTitle:"Inserisci un titolo",
+    // Alert
     warning:    "Attenzione",
     ok:         "OK",
-    yesLogout:  "Sì, Esci",
-    regDone:    "Registrazione completata! Ora accedi.",
-    insertTitle:"Inserisci un titolo",
+    // Errori amici
     alreadyFriend:    "è già tuo amico!",
     alreadySent:      "Hai già inviato una richiesta a",
     alreadyReceived:  "ti ha già inviato una richiesta!",
+    // Commenti
     comments:         "Commenti",
     noComments:       "Nessun commento ancora. Sii il primo!",
     commentPlaceholder: "Scrivi un commento...",
     commentPublish:   "Pubblica",
     commentLoginMsg:  "Accedi per commentare",
+    sortRecent:       "Recenti",
+    sortPopular:      "Popolari",
+    badgeOp:          "OP",
+    badgeFriend:      "👥 Amico",
+    // Tempo relativo
     justNow:          "Adesso",
+    minutesAgo:       "min fa",
+    hoursAgo:         "ore fa",
+    // Mobile nav
+    mobileProfile:    "Profilo",
+    mobileFeed:       "Home",
+    mobileFriends:    "Amici",
 };
 
 const LANGUAGES = [
@@ -66,11 +98,29 @@ const LANGUAGES = [
 // ── TRADUTTORE ────────────────────────────────────────────────────────────────
 let t = { ...BASE_STRINGS };
 
+// Versione cache — incrementa ogni volta che aggiungi stringhe a BASE_STRINGS
+const STRINGS_VERSION = "v4";
+
 async function translateAll(langCode) {
     if (langCode === "it") return { ...BASE_STRINGS };
-    const cacheKey = `lang_cache_${langCode}`;
+    const cacheKey = `lang_cache_${langCode}_${STRINGS_VERSION}`;
+
+    // Invalida cache versioni vecchie
+    Object.keys(localStorage)
+        .filter(k => k.startsWith(`lang_cache_${langCode}`) && k !== cacheKey)
+        .forEach(k => localStorage.removeItem(k));
+
     const cached = localStorage.getItem(cacheKey);
-    if (cached) { try { return JSON.parse(cached); } catch {} }
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached);
+            // Verifica che tutte le chiavi esistano (doppia sicurezza)
+            const allPresent = Object.keys(BASE_STRINGS).every(k => parsed[k] !== undefined);
+            if (allPresent) return parsed;
+            // Chiavi mancanti → rigenera
+            localStorage.removeItem(cacheKey);
+        } catch {}
+    }
     const keys = Object.keys(BASE_STRINGS), values = Object.values(BASE_STRINGS);
     const joined = values.join("\n||||\n");
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=it&tl=${langCode}&dt=t&q=${encodeURIComponent(joined)}`;
@@ -154,6 +204,23 @@ function applyStaticTranslations() {
     document.getElementById("commentText").placeholder     = t.commentPlaceholder;
     document.getElementById("submitComment").innerText     = t.commentPublish;
     document.getElementById("commentLoginMsg").innerText   = t.commentLoginMsg;
+    document.getElementById("sortRecent").innerText         = t.sortRecent;
+    document.getElementById("sortPopular").innerText        = t.sortPopular;
+    document.getElementById("label-edit-title").innerText   = t.editTitle;
+    document.getElementById("popoverViewProfile").innerText = t.viewProfile;
+    document.getElementById("popoverRemoveFriend").innerText= t.removeFriend;
+    document.getElementById("confirmRemoveTitle").innerText = t.removeFriendTitle;
+    document.getElementById("confirmRemoveYes").innerText   = t.confirmRemoveYes;
+    document.getElementById("cancelRemoveNo")?.setAttribute("innerText", t.cancel);
+    const postsLbl = document.getElementById("profilePostsLabel");
+    if (postsLbl) postsLbl.innerText = t.postsPublished;
+    // Mobile nav labels
+    const mnlP = document.getElementById("mobileNavLabelProfile");
+    const mnlF = document.getElementById("mobileNavLabelFeed");
+    const mnlA = document.getElementById("mobileNavLabelFriends");
+    if (mnlP) mnlP.innerText = t.mobileProfile;
+    if (mnlF) mnlF.innerText = t.mobileFeed;
+    if (mnlA) mnlA.innerText = t.mobileFriends;
 }
 
 // ── UI ────────────────────────────────────────────────────────────────────────
@@ -171,6 +238,7 @@ function updateUI() {
     document.getElementById("label-profile").innerText      = t.profile;
     document.getElementById("label-your-imgs").innerText    = t.yourImgs;
     document.getElementById("openCreate").innerText         = t.create;
+    if (!deleteMode) document.getElementById("deleteModeBtn").innerText = t.delete;
     document.getElementById("logoutConfirmTitle").innerText = t.logoutTitle;
     document.getElementById("yesLogoutBtn").innerText       = t.yesLogout;
     document.getElementById("cancelLogout").innerText       = t.cancel;
@@ -313,7 +381,7 @@ async function loadPosts() {
         const imgSrc = post.image.startsWith('http') ? post.image : `/uploads/${post.image}`;
         div.innerHTML = `
             <h3>${post.title}</h3>
-            <small>By ${post.author}</small>
+            <small>${t.by} ${post.author}</small>
             <img src="${imgSrc}" onerror="this.src='${DEFAULT_PFP}'" data-post-id="${post.id}">
             <div class="post-comment-count" data-post-id="${post.id}">💬 ${commentCount} ${t.comments}</div>`;
         div.querySelector("img").onclick = () => openPostDetail(post);
@@ -449,8 +517,8 @@ function appendComment(c, doScroll = true) {
             ${canDelete ? `<button class="comment-delete-btn" title="Elimina">✕</button>` : ""}
             <div class="comment-username-row">
                 <span class="comment-username">${c.author || "Utente"}</span>
-                ${c.author === currentOpenPostAuthor ? '<span class="badge badge-op">OP</span>' : ""}
-                ${currentUser && c.author !== currentUser.username && myFriends.has(c.author) ? '<span class="badge badge-friend">👥 Amico</span>' : ""}
+                ${c.author === currentOpenPostAuthor ? `<span class="badge badge-op">${t.badgeOp}</span>` : ""}
+                ${currentUser && c.author !== currentUser.username && myFriends.has(c.author) ? `<span class="badge badge-friend">${t.badgeFriend}</span>` : ""}
             </div>
             <div class="comment-text">${escapeHtml(c.text || "")}</div>
             <div class="comment-time">${formatRelTime(c.createdAt)}</div>
@@ -646,15 +714,18 @@ function formatRelTime(iso) {
     if (!iso) return t.justNow;
     const diff = (Date.now() - new Date(iso)) / 1000;
     if (diff < 60)   return t.justNow;
-    if (diff < 3600) return `${Math.floor(diff/60)} min fa`;
-    if (diff < 86400)return `${Math.floor(diff/3600)} ore fa`;
+    if (diff < 3600) return `${Math.floor(diff/60)} ${t.minutesAgo}`;
+    if (diff < 86400)return `${Math.floor(diff/3600)} ${t.hoursAgo}`;
     return new Date(iso).toLocaleDateString(currentLang, { day: "numeric", month: "short" });
 }
 
 document.getElementById("openCreate").onclick    = () => document.getElementById("createModal").classList.remove("hidden");
 document.getElementById("deleteModeBtn").onclick = async function () {
     if (!deleteMode) {
-        deleteMode = true; this.classList.add("active-delete"); this.innerText = t.confirm; updateUI();
+        deleteMode = true;
+        this.classList.add("active-delete");
+        this.innerText = t.confirm;
+        updateUI();
     } else {
         for (let [id, image] of selectedPosts)
             await fetch(`/posts/${id}`, { method: "DELETE", headers: { "Authorization": token, "Content-Type": "application/json" }, body: JSON.stringify({ image }) });
@@ -697,7 +768,7 @@ document.getElementById("popoverViewProfile").onclick = () => {
 document.getElementById("popoverRemoveFriend").onclick = () => {
     const username = popoverTarget;
     hideFriendPopover();
-    document.getElementById("confirmRemoveDesc").innerText = `Sei sicuro di voler rimuovere ${username} dagli amici?`;
+    document.getElementById("confirmRemoveDesc").innerText = `${t.removeFriendDesc} ${username} ${t.removeFriendDesc2}`;
     document.getElementById("confirmRemoveModal").classList.remove("hidden");
     document.getElementById("confirmRemoveYes").onclick = async () => {
         await fetch(`/friends/${encodeURIComponent(username)}`, {
@@ -731,7 +802,7 @@ async function openUserProfile(username) {
     const grid = document.getElementById("profilePanelPosts");
     grid.innerHTML = "";
     if (!data.posts || data.posts.length === 0) {
-        grid.innerHTML = `<p style="color:#555; font-size:13px;">Nessun post ancora.</p>`;
+        grid.innerHTML = `<p style="color:#555; font-size:13px;">${t.noPosts}</p>`;
     } else {
         data.posts.forEach(post => {
             const img = document.createElement("img");
