@@ -359,7 +359,7 @@ document.getElementById("submitPost").onclick = async () => {
 
 document.addEventListener('change', (e) => {
     if (e.target.id === 'postImageFile' && e.target.files[0])
-        document.getElementById("postImageUrl").value = e.target.files[0].name;
+        document.getElementById("postImageUrl").value = ""; // pulisce l'URL quando si sceglie un file
     if ((e.target.id === 'registerPfpFile' || e.target.id === 'editPfpFile') && e.target.files[0]) {
         const reader = new FileReader();
         const prevId = e.target.id === 'registerPfpFile' ? "registerPfpPreview" : "editPfpPreview";
