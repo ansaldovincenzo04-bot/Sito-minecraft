@@ -46,19 +46,19 @@
             <div id="posts"></div>
 
             <!-- POST DETAIL PANEL -->
-            <div id="postDetail" class="post-detail hidden">
+            <div id="postDetailPanel" class="post-detail hidden">
                 <div class="post-detail-inner">
                     <button class="detail-close-btn" id="postDetailClose">✕</button>
                     <div class="post-detail-left">
-                        <div class="post-detail-meta">
-                            <img id="detailAuthorAvatar" src="" class="detail-avatar">
+                        <div class="detail-author-row">
+                            <img id="detailAuthorAvatar" src="">
                             <div>
-                                <div id="detailAuthorName" class="detail-author"></div>
-                                <div id="detailPostDate" class="detail-date"></div>
+                                <div id="detailAuthorName"></div>
+                                <div id="detailPostDate"></div>
                             </div>
                         </div>
                         <h2 id="detailPostTitle" class="detail-title"></h2>
-                        <div class="detail-img-wrap">
+                        <div style="flex:1;min-height:0;display:flex;align-items:center;">
                             <img id="detailPostImage" src="" class="detail-img">
                         </div>
                     </div>
@@ -72,14 +72,13 @@
                         </div>
                         <div class="comments-list" id="commentsList"></div>
                         <div class="comment-input-area" id="commentInputArea">
-                            <div class="comment-input-row">
-                                <img id="commentMeAvatar" src="" class="comment-me-avatar">
-                                <div class="comment-input-wrap">
-                                    <textarea id="commentText" class="comment-textarea" placeholder="Scrivi un commento..."></textarea>
-                                    <button id="submitComment" class="comment-submit-btn">Pubblica</button>
-                                </div>
+                            <img id="commentMeAvatar" src="">
+                            <div class="comment-input-wrap">
+                                <textarea id="commentText" placeholder="Scrivi un commento..."></textarea>
+                                <code>Ctrl+Enter per inviare</code>
                             </div>
-                        </div>
+                            <button id="submitComment">Pubblica</button>
+                                        </div>
                         <div id="commentLoginMsg" class="comment-login-msg hidden">
                             Accedi per commentare
                         </div>

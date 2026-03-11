@@ -447,7 +447,7 @@ async function openPostDetail(post) {
         } else { document.getElementById("detailAuthorAvatar").src = DEFAULT_PFP; }
     } catch { document.getElementById("detailAuthorAvatar").src = DEFAULT_PFP; }
 
-    document.getElementById("postDetail").classList.remove("hidden");
+    document.getElementById("postDetailPanel").classList.remove("hidden");
     await loadComments(post.id);
     startCommentsPolling();
 }
@@ -461,7 +461,7 @@ function setSort(mode) {
 }
 
 function closePostDetail() {
-    document.getElementById("postDetail").classList.add("hidden");
+    document.getElementById("postDetailPanel").classList.add("hidden");
     currentOpenPostId = null;
     currentOpenPostAuthor = null;
     stopCommentsPolling();
@@ -845,7 +845,7 @@ async function openUserProfile(username) {
     // Sposta il pannello dentro main (stesso layer di postDetail)
     document.querySelector("main").appendChild(document.getElementById("userProfilePanel"));
     document.getElementById("userProfilePanel").classList.remove("hidden");
-    document.getElementById("postDetail").classList.add("hidden");
+    document.getElementById("postDetailPanel").classList.add("hidden");
 }
 
 document.getElementById("profilePanelClose").onclick = () => {
