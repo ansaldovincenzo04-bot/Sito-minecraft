@@ -159,8 +159,10 @@ function imgUrl(src) {
     return `/uploads/${src}`;
 }
 
-function showAlert(msg) {
+function showAlert(msg, type = "warning") {
     document.getElementById("alertMessage").innerText = msg;
+    document.getElementById("alertTitle").innerText   = type === "success" ? "✓" : t.warning;
+    document.getElementById("alertTitle").style.color = type === "success" ? "#43b581" : "#ff4747";
     document.getElementById("alertModal").classList.remove("hidden");
 }
 
@@ -321,7 +323,7 @@ document.getElementById("authSubmit").onclick = async () => {
             localStorage.setItem("user", JSON.stringify(data));
             location.reload();
         } else {
-            showAlert(t.regDone);
+            showAlert(t.regDone, "success");
             isLoginMode = true;
             updateAuthModal();
         }

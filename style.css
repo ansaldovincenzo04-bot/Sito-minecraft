@@ -406,7 +406,7 @@ main { flex: 1; padding: 20px; overflow-y: auto; min-width: 0; position: relativ
     }
     .logo { font-size: 15px; }
     .user-profile-nav img { width: 28px; height: 28px; margin-right: 6px; }
-    .user-profile-nav span { display: none; } /* nasconde il nome utente */
+    .user-profile-nav span { font-size: 12px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .logout-confirm { right: 0; width: 190px; }
 
     /* ── LAYOUT ── */
