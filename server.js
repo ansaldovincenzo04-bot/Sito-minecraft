@@ -101,6 +101,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// Route esplicita per la home
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 function auth(req, res, next) {
   const token = req.headers.authorization;
   try { req.user = jwt.verify(token, SECRET); next(); }
