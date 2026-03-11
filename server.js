@@ -184,8 +184,18 @@ app.get("/posts", async (req, res) => {
 });
 
 app.post("/posts", auth, upload.single("image"), async (req, res) => {
-  const image        = req.file ? req.file.path : req.body.imageUrl;
-  const cloudinaryId = req.file ? req.file.filename : null;
+  let image = req.body.imageUrl || "";
+  let cloudinaryId = null;
+  if (req.file) {
+    try {
+      const uploaded = await uploadToCloudinary(req.file.buffer, "hunters/posts");
+      image = uploaded.url;
+      cloudinaryId = uploaded.public_id;
+    } catch (err) {
+      console.error("Errore upload Cloudinary:", err);
+      return res.status(500).send("Errore caricamento immagine");
+    }
+  }
   const post = await Post.create({
     id: Date.now(), author: req.user.username,
     title: req.body.title, image, cloudinaryId
