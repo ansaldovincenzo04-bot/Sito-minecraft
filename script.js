@@ -354,14 +354,21 @@ document.getElementById("submitPost").onclick = async () => {
     if (!title) return showAlert(t.insertTitle);
     const fd = new FormData();
     fd.append("title", title);
-    if (file) fd.append("image", file); else fd.append("imageUrl", url);
+    if (file) {
+        fd.append("image", file); // file reale → Cloudinary
+    } else {
+        fd.append("imageUrl", url); // URL esterno
+    }
     const res = await fetch("/posts", { method: "POST", headers: { "Authorization": token }, body: fd });
     if (res.ok) location.reload();
 };
 
 document.addEventListener('change', (e) => {
-    if (e.target.id === 'postImageFile' && e.target.files[0])
-        document.getElementById("postImageUrl").value = ""; // pulisce l'URL quando si sceglie un file
+    if (e.target.id === 'postImageFile' && e.target.files[0]) {
+        // Mostra il nome del file nel campo testo (solo visivo, non viene mandato come URL)
+        document.getElementById("postImageUrl").value = e.target.files[0].name;
+        document.getElementById("postImageUrl").dataset.fileSelected = "true";
+    }
     if ((e.target.id === 'registerPfpFile' || e.target.id === 'editPfpFile') && e.target.files[0]) {
         const reader = new FileReader();
         const prevId = e.target.id === 'registerPfpFile' ? "registerPfpPreview" : "editPfpPreview";
@@ -728,7 +735,14 @@ function formatRelTime(iso) {
     return new Date(iso).toLocaleDateString(currentLang, { day: "numeric", month: "short" });
 }
 
-document.getElementById("openCreate").onclick    = () => document.getElementById("createModal").classList.remove("hidden");
+document.getElementById("openCreate").onclick = () => {
+    // Reset form
+    document.getElementById("postTitle").value = "";
+    document.getElementById("postImageUrl").value = "";
+    document.getElementById("postImageUrl").dataset.fileSelected = "false";
+    document.getElementById("postImageFile").value = "";
+    document.getElementById("createModal").classList.remove("hidden");
+};
 document.getElementById("deleteModeBtn").onclick = async function () {
     if (!deleteMode) {
         deleteMode = true;
