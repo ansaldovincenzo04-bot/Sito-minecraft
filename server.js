@@ -5,7 +5,7 @@ const jwt        = require("jsonwebtoken");
 const multer     = require("multer");
 const mongoose   = require("mongoose");
 const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const stream     = require("stream");
 require("dotenv").config();
 
 const app    = express();
@@ -20,20 +20,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage per immagini post
-const postStorage = new CloudinaryStorage({
-  cloudinary,
-  params: { folder: "hunters/posts", allowed_formats: ["jpg","jpeg","png","gif","webp"] }
-});
+// Multer usa memoria (non disco) — poi carichiamo su Cloudinary manualmente
+const upload = multer({ storage: multer.memoryStorage() });
 
-// Storage per immagini profilo
-const profileStorage = new CloudinaryStorage({
-  cloudinary,
-  params: { folder: "hunters/profiles", allowed_formats: ["jpg","jpeg","png","gif","webp"] }
-});
-
-const uploadPost    = multer({ storage: postStorage });
-const uploadProfile = multer({ storage: profileStorage });
+// Carica buffer su Cloudinary e restituisce { url, public_id }
+function uploadToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "image" },
+      (err, result) => err ? reject(err) : resolve({ url: result.secure_url, public_id: result.public_id })
+    );
+    const readable = new stream.PassThrough();
+    readable.end(buffer);
+    readable.pipe(uploadStream);
+  });
+}
 
 // ── MONGODB ───────────────────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI)
@@ -114,12 +115,16 @@ app.get("/auth/verify", auth, async (req, res) => {
   res.json({ username: user.username, profileImage: user.profileImage });
 });
 
-app.post("/register", uploadProfile.single("profileImage"), async (req, res) => {
+app.post("/register", upload.single("profileImage"), async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).send("Compila tutti i campi obbligatori");
   if (await User.findOne({ username })) return res.status(400).send("Lo username esiste già");
   const hash = await bcrypt.hash(password, 10);
-  const profileImage = req.file ? req.file.path : "";
+  let profileImage = "";
+  if (req.file) {
+    const uploaded = await uploadToCloudinary(req.file.buffer, "hunters/profiles");
+    profileImage = uploaded.url;
+  }
   await User.create({ username, password: hash, profileImage });
   res.status(201).json({ ok: true });
 });
@@ -134,18 +139,19 @@ app.post("/login", async (req, res) => {
   res.json({ token, username: user.username, profileImage: user.profileImage });
 });
 
-app.post("/update-profile", auth, uploadProfile.single("profileImage"), async (req, res) => {
+app.post("/update-profile", auth, upload.single("profileImage"), async (req, res) => {
   const user = await User.findOne({ username: req.user.username });
   if (!user) return res.status(404).send("Utente non trovato");
 
   // Aggiorna immagine profilo
   if (req.file) {
-    // Elimina vecchia immagine da Cloudinary se era di Cloudinary
+    // Elimina vecchia immagine da Cloudinary
     if (user.profileImage && user.profileImage.includes("cloudinary")) {
-      const pid = user.profileImage.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(`hunters/profiles/${pid}`).catch(() => {});
+      const pid = user.profileImage.split("/").slice(-2).join("/").split(".")[0];
+      await cloudinary.uploader.destroy(pid).catch(() => {});
     }
-    user.profileImage = req.file.path;
+    const uploaded = await uploadToCloudinary(req.file.buffer, "hunters/profiles");
+    user.profileImage = uploaded.url;
   }
 
   // Aggiorna username
@@ -171,7 +177,7 @@ app.get("/posts", async (req, res) => {
   res.json(posts);
 });
 
-app.post("/posts", auth, uploadPost.single("image"), async (req, res) => {
+app.post("/posts", auth, upload.single("image"), async (req, res) => {
   const image        = req.file ? req.file.path : req.body.imageUrl;
   const cloudinaryId = req.file ? req.file.filename : null;
   const post = await Post.create({
