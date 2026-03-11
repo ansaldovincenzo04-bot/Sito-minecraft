@@ -2,6 +2,8 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Hunters Universe</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -46,7 +48,7 @@
             <!-- POST DETAIL PANEL -->
             <div id="postDetail" class="post-detail hidden">
                 <div class="post-detail-inner">
-                    <button class="post-detail-close" id="postDetailClose">✕</button>
+                    <button class="detail-close-btn" id="postDetailClose">✕</button>
                     <div class="post-detail-left">
                         <div class="post-detail-meta">
                             <img id="detailAuthorAvatar" src="" class="detail-avatar">
@@ -62,9 +64,8 @@
                     </div>
                     <div class="post-detail-right">
                         <div class="comments-header">
-                            <span class="comments-icon">💬</span>
-                            <span id="commentsTitle">Commenti</span>
-                            <div class="sort-toggle" id="sortToggle">
+                            <h3 id="commentsTitle">Commenti</h3>
+                            <div class="sort-controls" id="sortToggle">
                                 <button class="sort-btn active" id="sortRecent" onclick="setSort('recent')">Recenti</button>
                                 <button class="sort-btn" id="sortPopular" onclick="setSort('popular')">Popolari</button>
                             </div>
@@ -187,7 +188,7 @@
     <!-- USER PROFILE PANEL (inside main, added by JS) -->
     <div id="userProfilePanel" class="post-detail hidden">
         <div class="post-detail-inner profile-panel-inner">
-            <button class="post-detail-close" id="profilePanelClose">✕</button>
+            <button class="profile-panel-close" id="profilePanelClose">✕</button>
             <div class="profile-panel-content">
                 <!-- Header profilo -->
                 <div class="profile-panel-header">
@@ -196,6 +197,7 @@
                     </div>
                     <div class="profile-panel-info">
                         <h1 id="profilePanelUsername" class="profile-panel-name"></h1>
+                        <div id="profilePanelStats" class="profile-panel-stats"></div>
                         <div class="profile-panel-reactions">
                             <span class="profile-reaction-badge up">👍 <span id="profileTotalUps">0</span></span>
                             <span class="profile-reaction-badge down">👎 <span id="profileTotalDowns">0</span></span>
