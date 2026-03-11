@@ -152,6 +152,13 @@ let panelStack            = [];     // ['profile', 'comments'] per navigazione
 let commentsPollingInterval = null;
 const DEFAULT_PFP = "/uploads/default-avatar.png";
 
+// Gestisce sia URL Cloudinary (https://...) che vecchi path locali (/uploads/...)
+function imgUrl(src) {
+    if (!src) return DEFAULT_PFP;
+    if (src.startsWith("http")) return src;
+    return `/uploads/${src}`;
+}
+
 function showAlert(msg) {
     document.getElementById("alertMessage").innerText = msg;
     document.getElementById("alertModal").classList.remove("hidden");
@@ -250,7 +257,7 @@ function updateUI() {
         document.getElementById("commentInputArea").classList.add("hidden");
         document.getElementById("commentLoginMsg").classList.remove("hidden");
     } else {
-        const pfp = (currentUser && currentUser.profileImage) ? `/uploads/${currentUser.profileImage}` : DEFAULT_PFP;
+        const pfp = (currentUser && currentUser.profileImage) ? imgUrl(currentUser.profileImage) : DEFAULT_PFP;
         const currentLangObj = LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
         authArea.innerHTML = `
             <div class="user-profile-nav" onclick="toggleMenu('logoutMenu')">
@@ -270,7 +277,7 @@ function updateUI() {
         rightSidebar.classList.remove("locked");
         document.getElementById("commentInputArea").classList.remove("hidden");
         document.getElementById("commentLoginMsg").classList.add("hidden");
-        document.getElementById("commentMeAvatar").src = currentUser.profileImage ? `/uploads/${currentUser.profileImage}` : DEFAULT_PFP;
+        document.getElementById("commentMeAvatar").src = imgUrl(currentUser.profileImage);
         loadMyPosts();
         loadFriendsData();
         startPolling();
@@ -324,7 +331,7 @@ function openEditProfile() {
     document.getElementById("logoutMenu").classList.add("hidden");
     if (currentUser) {
         document.getElementById("editUsernameInput").value = currentUser.username;
-        document.getElementById("editPfpPreview").src = currentUser.profileImage ? `/uploads/${currentUser.profileImage}` : DEFAULT_PFP;
+        document.getElementById("editPfpPreview").src = imgUrl(currentUser.profileImage);
     }
     document.getElementById("editProfileModal").classList.remove("hidden");
 }
@@ -378,7 +385,7 @@ async function loadPosts() {
 
         const div = document.createElement("div");
         div.className = "post";
-        const imgSrc = post.image.startsWith('http') ? post.image : `/uploads/${post.image}`;
+        const imgSrc = imgUrl(post.image);
         div.innerHTML = `
             <h3>${post.title}</h3>
             <small>${t.by} ${post.author}</small>
@@ -395,7 +402,7 @@ async function loadMyPosts() {
     const container = document.getElementById("myPosts"); container.innerHTML = "";
     posts.filter(p => p.author === (currentUser ? currentUser.username : "")).forEach(post => {
         const img = document.createElement("img");
-        img.src = post.image.startsWith('http') ? post.image : `/uploads/${post.image}`;
+        img.src = imgUrl(post.image);
         img.className = "mini-post" + (selectedPosts.has(post.id) ? " selectedDelete" : "");
         img.onclick = () => {
             if (deleteMode) {
@@ -415,7 +422,7 @@ async function loadMyPosts() {
 async function openPostDetail(post) {
     currentOpenPostId     = post.id;
     currentOpenPostAuthor = post.author;
-    const imgSrc = post.image && !post.image.startsWith('http') ? `/uploads/${post.image}` : (post.image || DEFAULT_PFP);
+    const imgSrc = imgUrl(post.image);
 
     document.getElementById("detailPostTitle").innerText = post.title || "";
     document.getElementById("detailPostImage").src = imgSrc;
@@ -427,7 +434,7 @@ async function openPostDetail(post) {
         const ur = await fetch(`/users/profile/${encodeURIComponent(post.author)}`);
         if (ur.ok) {
             const u = await ur.json();
-            document.getElementById("detailAuthorAvatar").src = u.profileImage ? `/uploads/${u.profileImage}` : DEFAULT_PFP;
+            document.getElementById("detailAuthorAvatar").src = imgUrl(u.profileImage);
         } else { document.getElementById("detailAuthorAvatar").src = DEFAULT_PFP; }
     } catch { document.getElementById("detailAuthorAvatar").src = DEFAULT_PFP; }
 
@@ -503,7 +510,7 @@ function appendComment(c, doScroll = true) {
 
     // Può eliminare: autore del commento OPPURE autore del post
     const canDelete = currentUser && (c.author === currentUser.username || currentOpenPostAuthor === currentUser.username);
-    const pfp       = c.profileImage ? `/uploads/${c.profileImage}` : DEFAULT_PFP;
+    const pfp       = imgUrl(c.profileImage);
     const ups       = c.ups   || 0;
     const downs     = c.downs || 0;
     const myReaction = c.myReaction || null;
@@ -622,7 +629,7 @@ function renderFriendsList(friends) {
         div.innerHTML = `<img src="${DEFAULT_PFP}" onerror="this.src='${DEFAULT_PFP}'"><span>${username}</span>`;
         // Carica avatar reale
         fetch(`/users/profile/${encodeURIComponent(username)}`).then(r => r.ok ? r.json() : null).then(u => {
-            if (u && u.profileImage) div.querySelector("img").src = `/uploads/${u.profileImage}`;
+            if (u && u.profileImage) div.querySelector("img").src = imgUrl(u.profileImage);
         });
         div.onclick = (e) => showFriendPopover(e, username);
         container.appendChild(div);
@@ -793,7 +800,7 @@ async function openUserProfile(username) {
     const data = await res.json();
 
     document.getElementById("profilePanelAvatar").src =
-        data.profileImage ? `/uploads/${data.profileImage}` : DEFAULT_PFP;
+        imgUrl(data.profileImage);
     document.getElementById("profilePanelUsername").innerText = data.username;
     document.getElementById("profileTotalUps").innerText      = data.totalUps   || 0;
     document.getElementById("profileTotalDowns").innerText    = data.totalDowns || 0;
@@ -807,7 +814,7 @@ async function openUserProfile(username) {
         data.posts.forEach(post => {
             const img = document.createElement("img");
             img.className = "profile-post-thumb";
-            img.src = post.image && !post.image.startsWith("http") ? `/uploads/${post.image}` : (post.image || DEFAULT_PFP);
+            img.src = imgUrl(post.image);
             img.onerror = () => img.src = DEFAULT_PFP;
             img.onclick = () => {
                 // Nascondi profilo, apri commenti, ricorda stack

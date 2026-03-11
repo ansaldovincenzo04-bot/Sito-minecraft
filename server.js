@@ -1,262 +1,316 @@
-const express = require("express");
-const fs      = require("fs");
-const multer  = require("multer");
-const cors    = require("cors");
-const bcrypt  = require("bcrypt");
-const jwt     = require("jsonwebtoken");
-const path    = require("path");
+const express    = require("express");
+const cors       = require("cors");
+const bcrypt     = require("bcrypt");
+const jwt        = require("jsonwebtoken");
+const multer     = require("multer");
+const mongoose   = require("mongoose");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+require("dotenv").config();
 
 const app    = express();
-const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
-const SECRET = "hunters_universe_secret";
+const PORT   = process.env.PORT || 3000;
+const HOST   = "0.0.0.0";
+const SECRET = process.env.JWT_SECRET || "hunters_universe_secret";
 
+// ── CLOUDINARY ────────────────────────────────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
+// Storage per immagini post
+const postStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: "hunters/posts", allowed_formats: ["jpg","jpeg","png","gif","webp"] }
+});
+
+// Storage per immagini profilo
+const profileStorage = new CloudinaryStorage({
+  cloudinary,
+  params: { folder: "hunters/profiles", allowed_formats: ["jpg","jpeg","png","gif","webp"] }
+});
+
+const uploadPost    = multer({ storage: postStorage });
+const uploadProfile = multer({ storage: profileStorage });
+
+// ── MONGODB ───────────────────────────────────────────────────────────────────
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log("MongoDB connesso"))
+  .catch(err => console.error("Errore MongoDB:", err));
+
+// ── SCHEMI ────────────────────────────────────────────────────────────────────
+const UserSchema = new mongoose.Schema({
+  username:     { type: String, required: true, unique: true },
+  password:     { type: String, required: true },
+  profileImage: { type: String, default: "" }, // URL Cloudinary
+});
+
+const PostSchema = new mongoose.Schema({
+  id:     { type: Number, default: () => Date.now() },
+  author: String,
+  title:  String,
+  image:  String, // URL Cloudinary o URL esterno
+  cloudinaryId: String, // per eliminazione
+}, { timestamps: true });
+
+const FriendSchema = new mongoose.Schema({
+  from:   String,
+  to:     String,
+  status: { type: String, enum: ["pending","accepted"], default: "pending" }
+});
+
+const CommentSchema = new mongoose.Schema({
+  id:        { type: Number, default: () => Date.now() },
+  postId:    Number,
+  author:    String,
+  text:      String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const ReactionSchema = new mongoose.Schema({
+  commentId: Number,
+  username:  String,
+  reaction:  { type: String, enum: ["up","down"] }
+});
+
+const DeletedCommentSchema = new mongoose.Schema({
+  id:          Number,
+  postId:      Number,
+  author:      String,
+  text:        String,
+  createdAt:   Date,
+  deletedAt:   { type: Date, default: Date.now },
+  deletedBy:   String,
+  deletedFrom: String,
+  postTitle:   String,
+  postAuthor:  String,
+});
+
+const User           = mongoose.model("User",           UserSchema);
+const Post           = mongoose.model("Post",           PostSchema);
+const Friend         = mongoose.model("Friend",         FriendSchema);
+const Comment        = mongoose.model("Comment",        CommentSchema);
+const Reaction       = mongoose.model("Reaction",       ReactionSchema);
+const DeletedComment = mongoose.model("DeletedComment", DeletedCommentSchema);
+
+// ── MIDDLEWARE ────────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));       // serve index.html, style.css, script.js dalla root
-app.use(express.static("public"));
-app.use("/uploads", express.static("uploads"));
-
-const dirData            = path.join(__dirname, "data");
-const dirUploads         = path.join(__dirname, "uploads");
-const dirDeleted         = path.join(dirUploads, "deleted");
-const dirDeletedComments = path.join(dirData, "deleted_comments");
-[dirData, dirUploads, dirDeleted, dirDeletedComments].forEach(dir => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-});
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, dirUploads),
-  filename:    (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
-});
-const upload = multer({ storage });
-
-const postsPath           = path.join(dirData, "posts.json");
-const usersPath           = path.join(dirData, "users.json");
-const friendsPath         = path.join(dirData, "friends.json");
-const commentsPath        = path.join(dirData, "comments.json");
-const reactionsPath       = path.join(dirData, "reactions.json");
-const deletedCommentsPath = path.join(dirData, "deleted_comments", "deleted_comments.json");
-
-function read(f)     { try { return JSON.parse(fs.readFileSync(f)); } catch { return []; } }
-function write(f, d) { fs.writeFileSync(f, JSON.stringify(d, null, 2)); }
+app.use(express.static(__dirname));
 
 function auth(req, res, next) {
   const token = req.headers.authorization;
-  try { req.user = jwt.verify(token, SECRET); next(); } catch { res.status(401).send(); }
+  try { req.user = jwt.verify(token, SECRET); next(); }
+  catch { res.status(401).send(); }
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 
-app.post("/register", upload.single("profileImage"), async (req, res) => {
-  const { username, password, email } = req.body;
-  if (!username || !password) return res.status(400).send("Compila tutti i campi obbligatori");
-  const users = read(usersPath);
-  if (users.find(u => u.username === username)) return res.status(400).send("Lo username esiste già");
-  const hash = await bcrypt.hash(password, 10);
-  users.push({ username, password: hash, profileImage: req.file ? req.file.filename : "" });
-  write(usersPath, users);
-  res.status(201).json({ ok: true });
-});
-
-
-// Verifica token ancora valido (usato al caricamento pagina)
-app.get("/auth/verify", auth, (req, res) => {
-  const users = read(usersPath);
-  const user  = users.find(u => u.username === req.user.username);
+app.get("/auth/verify", auth, async (req, res) => {
+  const user = await User.findOne({ username: req.user.username });
   if (!user) return res.status(401).send("Utente non trovato");
   res.json({ username: user.username, profileImage: user.profileImage });
+});
+
+app.post("/register", uploadProfile.single("profileImage"), async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).send("Compila tutti i campi obbligatori");
+  if (await User.findOne({ username })) return res.status(400).send("Lo username esiste già");
+  const hash = await bcrypt.hash(password, 10);
+  const profileImage = req.file ? req.file.path : "";
+  await User.create({ username, password: hash, profileImage });
+  res.status(201).json({ ok: true });
 });
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(401).send("Inserisci tutti i dati");
-  const users = read(usersPath);
-  const user  = users.find(u => u.username === username);
+  const user = await User.findOne({ username });
   if (!user) return res.status(401).send("Username errato");
-  const validPass = await bcrypt.compare(password, user.password);
-  if (!validPass) return res.status(401).send("Password errata");
+  if (!await bcrypt.compare(password, user.password)) return res.status(401).send("Password errata");
   const token = jwt.sign({ username: user.username }, SECRET);
   res.json({ token, username: user.username, profileImage: user.profileImage });
 });
 
-app.post("/update-profile", auth, upload.single("profileImage"), (req, res) => {
-  let users = read(usersPath);
-  let posts = read(postsPath);
-  const idx = users.findIndex(u => u.username === req.user.username);
-  if (req.file) users[idx].profileImage = req.file.filename;
+app.post("/update-profile", auth, uploadProfile.single("profileImage"), async (req, res) => {
+  const user = await User.findOne({ username: req.user.username });
+  if (!user) return res.status(404).send("Utente non trovato");
+
+  // Aggiorna immagine profilo
+  if (req.file) {
+    // Elimina vecchia immagine da Cloudinary se era di Cloudinary
+    if (user.profileImage && user.profileImage.includes("cloudinary")) {
+      const pid = user.profileImage.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(`hunters/profiles/${pid}`).catch(() => {});
+    }
+    user.profileImage = req.file.path;
+  }
+
+  // Aggiorna username
   const oldN = req.user.username, newN = req.body.username;
   if (newN && newN !== oldN) {
-    users[idx].username = newN;
-    posts = posts.map(p => { if (p.author === oldN) p.author = newN; return p; });
-    write(postsPath, posts);
-    let friends = read(friendsPath);
-    friends = friends.map(f => {
-      if (f.from === oldN) f.from = newN;
-      if (f.to   === oldN) f.to   = newN;
-      return f;
-    });
-    write(friendsPath, friends);
-    let comments = read(commentsPath);
-    comments = comments.map(c => { if (c.author === oldN) c.author = newN; return c; });
-    write(commentsPath, comments);
-    let reactions = read(reactionsPath);
-    reactions = reactions.map(r => { if (r.username === oldN) r.username = newN; return r; });
-    write(reactionsPath, reactions);
+    user.username = newN;
+    await Post.updateMany({ author: oldN }, { author: newN });
+    await Friend.updateMany({ from: oldN }, { from: newN });
+    await Friend.updateMany({ to: oldN },   { to: newN });
+    await Comment.updateMany({ author: oldN }, { author: newN });
+    await Reaction.updateMany({ username: oldN }, { username: newN });
   }
-  write(usersPath, users);
-  res.json({ token: jwt.sign({ username: users[idx].username }, SECRET), username: users[idx].username, profileImage: users[idx].profileImage });
+
+  await user.save();
+  const token = jwt.sign({ username: user.username }, SECRET);
+  res.json({ token, username: user.username, profileImage: user.profileImage });
 });
 
 // ── POSTS ─────────────────────────────────────────────────────────────────────
 
-app.get("/posts", (req, res) => res.json(read(postsPath)));
-
-app.post("/posts", auth, upload.single("image"), (req, res) => {
-  const posts = read(postsPath);
-  const post  = { id: Date.now(), author: req.user.username, title: req.body.title, image: req.file ? req.file.filename : req.body.imageUrl };
-  posts.push(post); write(postsPath, posts); res.json(post);
+app.get("/posts", async (req, res) => {
+  const posts = await Post.find().sort({ id: 1 });
+  res.json(posts);
 });
 
-app.delete("/posts/:id", auth, (req, res) => {
-  const postId        = req.params.id;
-  const imageFilename = req.body && req.body.image ? req.body.image : null;
-  if (imageFilename && !imageFilename.startsWith("http")) {
-    const filename = path.basename(imageFilename);
-    const srcPath  = path.join(dirUploads, filename);
-    const destPath = path.join(dirDeleted, filename);
-    try { if (fs.existsSync(srcPath)) fs.renameSync(srcPath, destPath); } catch (err) { console.error(`[DELETE] ${err.message}`); }
+app.post("/posts", auth, uploadPost.single("image"), async (req, res) => {
+  const image        = req.file ? req.file.path : req.body.imageUrl;
+  const cloudinaryId = req.file ? req.file.filename : null;
+  const post = await Post.create({
+    id: Date.now(), author: req.user.username,
+    title: req.body.title, image, cloudinaryId
+  });
+  res.json(post);
+});
+
+app.delete("/posts/:id", auth, async (req, res) => {
+  const post = await Post.findOne({ id: Number(req.params.id) });
+  if (post && post.cloudinaryId) {
+    await cloudinary.uploader.destroy(post.cloudinaryId).catch(() => {});
   }
-  let posts = read(postsPath);
-  posts = posts.filter(p => String(p.id) !== String(postId));
-  write(postsPath, posts);
-  let comments = read(commentsPath);
-  comments = comments.filter(c => String(c.postId) !== String(postId));
-  write(commentsPath, comments);
+  await Post.deleteOne({ id: Number(req.params.id) });
+  await Comment.deleteMany({ postId: Number(req.params.id) });
   res.send("ok");
 });
 
 // ── COMMENTI ──────────────────────────────────────────────────────────────────
 
-app.get("/posts/:id/comments", (req, res) => {
-  const comments  = read(commentsPath);
-  const users     = read(usersPath);
-  const reactions = read(reactionsPath);
-  const me = req.headers.authorization ? (() => { try { return jwt.verify(req.headers.authorization, SECRET).username; } catch { return null; } })() : null;
-  const postComments = comments
-    .filter(c => String(c.postId) === String(req.params.id))
-    .map(c => {
-      const u  = users.find(u => u.username === c.author);
-      const cr = reactions.filter(r => String(r.commentId) === String(c.id));
-      return {
-        ...c,
-        profileImage: u ? u.profileImage : "",
-        ups:   cr.filter(r => r.reaction === "up").length,
-        downs: cr.filter(r => r.reaction === "down").length,
-        myReaction: me ? (cr.find(r => r.username === me) || {}).reaction || null : null
-      };
-    });
-  res.json(postComments);
+app.get("/posts/:id/comments", async (req, res) => {
+  const me = req.headers.authorization
+    ? (() => { try { return jwt.verify(req.headers.authorization, SECRET).username; } catch { return null; } })()
+    : null;
+
+  const comments  = await Comment.find({ postId: Number(req.params.id) }).sort({ createdAt: 1 });
+  const reactions = await Reaction.find({ commentId: { $in: comments.map(c => c.id) } });
+
+  const result = await Promise.all(comments.map(async c => {
+    const u  = await User.findOne({ username: c.author });
+    const cr = reactions.filter(r => r.commentId === c.id);
+    return {
+      id: c.id, postId: c.postId, author: c.author, text: c.text, createdAt: c.createdAt,
+      profileImage: u ? u.profileImage : "",
+      ups:   cr.filter(r => r.reaction === "up").length,
+      downs: cr.filter(r => r.reaction === "down").length,
+      myReaction: me ? (cr.find(r => r.username === me) || {}).reaction || null : null
+    };
+  }));
+  res.json(result);
 });
 
-app.post("/posts/:id/comments", auth, (req, res) => {
+app.post("/posts/:id/comments", auth, async (req, res) => {
   const { text } = req.body;
   if (!text || !text.trim()) return res.status(400).send("Commento vuoto");
-  const comments = read(commentsPath);
-  const comment  = { id: Date.now(), postId: Number(req.params.id), author: req.user.username, text: text.trim(), createdAt: new Date().toISOString() };
-  comments.push(comment);
-  write(commentsPath, comments);
-  const users = read(usersPath);
-  const u     = users.find(u => u.username === comment.author);
-  res.json({ ...comment, profileImage: u ? u.profileImage : "", ups: 0, downs: 0, myReaction: null });
+  const comment = await Comment.create({
+    id: Date.now(), postId: Number(req.params.id),
+    author: req.user.username, text: text.trim()
+  });
+  const u = await User.findOne({ username: comment.author });
+  res.json({ id: comment.id, postId: comment.postId, author: comment.author, text: comment.text,
+    createdAt: comment.createdAt, profileImage: u ? u.profileImage : "", ups: 0, downs: 0, myReaction: null });
 });
 
-app.delete("/posts/:postId/comments/:commentId", auth, (req, res) => {
-  const commentId = String(req.params.commentId);
-  const postId    = String(req.params.postId);
+app.delete("/posts/:postId/comments/:commentId", auth, async (req, res) => {
+  const commentId = Number(req.params.commentId);
+  const postId    = Number(req.params.postId);
   const deletedBy = req.user.username;
-  let comments    = read(commentsPath);
-  const posts     = read(postsPath);
-  const post      = posts.find(p => String(p.id) === postId);
-  const isPostAuthor = post && post.author === deletedBy;
-  const comment   = comments.find(c => String(c.id) === commentId);
+
+  const comment = await Comment.findOne({ id: commentId });
   if (!comment) return res.status(404).send("Commento non trovato");
-  const canDelete = comment.author === deletedBy || isPostAuthor;
-  if (!canDelete) return res.status(403).send("Non autorizzato");
-  const archived = read(deletedCommentsPath);
-  archived.push({ ...comment, deletedAt: new Date().toISOString(), deletedBy, deletedFrom: isPostAuthor && comment.author !== deletedBy ? "post_owner" : "self", postTitle: post ? post.title : "", postAuthor: post ? post.author : "" });
-  write(deletedCommentsPath, archived);
-  comments = comments.filter(c => String(c.id) !== commentId);
-  write(commentsPath, comments);
+
+  const post         = await Post.findOne({ id: postId });
+  const isPostAuthor = post && post.author === deletedBy;
+  if (comment.author !== deletedBy && !isPostAuthor) return res.status(403).send("Non autorizzato");
+
+  await DeletedComment.create({
+    ...comment.toObject(),
+    deletedAt: new Date(), deletedBy,
+    deletedFrom: isPostAuthor && comment.author !== deletedBy ? "post_owner" : "self",
+    postTitle:  post ? post.title  : "",
+    postAuthor: post ? post.author : ""
+  });
+
+  await Comment.deleteOne({ id: commentId });
   res.send("ok");
 });
 
 // ── REACTIONS ─────────────────────────────────────────────────────────────────
 
-app.post("/posts/:postId/comments/:commentId/react", auth, (req, res) => {
+app.post("/posts/:postId/comments/:commentId/react", auth, async (req, res) => {
   const { reaction } = req.body;
   if (!["up","down"].includes(reaction)) return res.status(400).send("Reazione non valida");
   const username  = req.user.username;
   const commentId = Number(req.params.commentId);
-  let reactions   = read(reactionsPath);
-  const idx       = reactions.findIndex(r => r.commentId === commentId && r.username === username);
-  if (idx !== -1) {
-    if (reactions[idx].reaction === reaction) reactions.splice(idx, 1);
-    else reactions[idx].reaction = reaction;
+
+  const existing = await Reaction.findOne({ commentId, username });
+  if (existing) {
+    if (existing.reaction === reaction) await Reaction.deleteOne({ _id: existing._id });
+    else { existing.reaction = reaction; await existing.save(); }
   } else {
-    reactions.push({ commentId, username, reaction });
+    await Reaction.create({ commentId, username, reaction });
   }
-  write(reactionsPath, reactions);
-  const cr = reactions.filter(r => r.commentId === commentId);
-  res.json({ ups: cr.filter(r => r.reaction === "up").length, downs: cr.filter(r => r.reaction === "down").length, myReaction: (cr.find(r => r.username === username) || {}).reaction || null });
+
+  const cr = await Reaction.find({ commentId });
+  res.json({
+    ups:   cr.filter(r => r.reaction === "up").length,
+    downs: cr.filter(r => r.reaction === "down").length,
+    myReaction: (cr.find(r => r.username === username) || {}).reaction || null
+  });
 });
 
 // ── USERS ─────────────────────────────────────────────────────────────────────
 
-app.get("/users/profile/:username", (req, res) => {
-  const users     = read(usersPath);
-  const user      = users.find(u => u.username === req.params.username);
+app.get("/users/profile/:username", async (req, res) => {
+  const user = await User.findOne({ username: req.params.username });
   if (!user) return res.status(404).send("Utente non trovato");
 
-  // Post dell'utente
-  const posts     = read(postsPath);
-  const userPosts = posts.filter(p => p.author === req.params.username);
-
-  // Totale reazioni ricevute sui propri commenti
-  const comments  = read(commentsPath);
-  const reactions = read(reactionsPath);
-  const myCommentIds = new Set(comments.filter(c => c.author === req.params.username).map(c => c.id));
-  const myReactions  = reactions.filter(r => myCommentIds.has(r.commentId));
-  const totalUps     = myReactions.filter(r => r.reaction === "up").length;
-  const totalDowns   = myReactions.filter(r => r.reaction === "down").length;
+  const posts    = await Post.find({ author: req.params.username }).sort({ id: 1 });
+  const comments = await Comment.find({ author: req.params.username });
+  const ids      = comments.map(c => c.id);
+  const reactions = await Reaction.find({ commentId: { $in: ids } });
 
   res.json({
-    username: user.username,
+    username:     user.username,
     profileImage: user.profileImage,
-    posts: userPosts,
-    totalUps,
-    totalDowns
+    posts,
+    totalUps:   reactions.filter(r => r.reaction === "up").length,
+    totalDowns: reactions.filter(r => r.reaction === "down").length
   });
 });
 
-app.get("/users/search", auth, (req, res) => {
+app.get("/users/search", auth, async (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).send("Username mancante");
-  const users = read(usersPath);
-  const found = users.find(u => u.username === username && u.username !== req.user.username);
+  const found = await User.findOne({ username, $and: [{ username: { $ne: req.user.username } }] });
   if (!found) return res.status(404).send("Utente non trovato");
   res.json({ username: found.username, profileImage: found.profileImage });
 });
 
 // ── FRIENDS ───────────────────────────────────────────────────────────────────
 
-app.get("/friends/data", auth, (req, res) => {
+app.get("/friends/data", auth, async (req, res) => {
   const me      = req.user.username;
-  const friends = read(friendsPath);
+  const friends = await Friend.find({ $or: [{ from: me }, { to: me }] });
   const result  = { friends: [], pendingSent: [], pendingReceived: [] };
   friends.forEach(f => {
-    if (f.status === "accepted" && (f.from === me || f.to === me))
+    if (f.status === "accepted")
       result.friends.push(f.from === me ? f.to : f.from);
     else if (f.status === "pending") {
       if (f.from === me) result.pendingSent.push(f.to);
@@ -266,45 +320,33 @@ app.get("/friends/data", auth, (req, res) => {
   res.json(result);
 });
 
-app.delete("/friends/:username", auth, (req, res) => {
-  const me    = req.user.username;
-  const other = req.params.username;
-  let friends = read(friendsPath);
-  friends = friends.filter(f =>
-    !((f.from === me && f.to === other) || (f.from === other && f.to === me))
-  );
-  write(friendsPath, friends);
+app.delete("/friends/:username", auth, async (req, res) => {
+  const me = req.user.username, other = req.params.username;
+  await Friend.deleteMany({ $or: [{ from: me, to: other }, { from: other, to: me }] });
   res.json({ ok: true });
 });
 
-app.post("/friends/request", auth, (req, res) => {
+app.post("/friends/request", auth, async (req, res) => {
   const from = req.user.username, { to } = req.body;
   if (!to || to === from) return res.status(400).send("Destinatario non valido");
-  const users = read(usersPath);
-  if (!users.find(u => u.username === to)) return res.status(404).send("Utente non trovato");
-  const friends = read(friendsPath);
-  const exists  = friends.find(f => (f.from === from && f.to === to) || (f.from === to && f.to === from));
+  if (!await User.findOne({ username: to })) return res.status(404).send("Utente non trovato");
+  const exists = await Friend.findOne({ $or: [{ from, to }, { from: to, to: from }] });
   if (exists) return res.status(409).send("Richiesta già esistente o già amici");
-  friends.push({ from, to, status: "pending" });
-  write(friendsPath, friends);
+  await Friend.create({ from, to, status: "pending" });
   res.json({ ok: true });
 });
 
-app.post("/friends/accept", auth, (req, res) => {
+app.post("/friends/accept", auth, async (req, res) => {
   const me = req.user.username, { from } = req.body;
-  const friends = read(friendsPath);
-  const idx = friends.findIndex(f => f.from === from && f.to === me && f.status === "pending");
-  if (idx === -1) return res.status(404).send("Richiesta non trovata");
-  friends[idx].status = "accepted";
-  write(friendsPath, friends);
+  const f  = await Friend.findOne({ from, to: me, status: "pending" });
+  if (!f) return res.status(404).send("Richiesta non trovata");
+  f.status = "accepted"; await f.save();
   res.json({ ok: true });
 });
 
-app.post("/friends/reject", auth, (req, res) => {
+app.post("/friends/reject", auth, async (req, res) => {
   const me = req.user.username, { from } = req.body;
-  let friends = read(friendsPath);
-  friends = friends.filter(f => !(f.from === from && f.to === me && f.status === "pending"));
-  write(friendsPath, friends);
+  await Friend.deleteOne({ from, to: me, status: "pending" });
   res.json({ ok: true });
 });
 
