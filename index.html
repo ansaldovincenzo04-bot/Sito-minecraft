@@ -211,5 +211,21 @@
     </div>
 
     <script src="script.js"></script>
+    <!-- FEEDBACK MODAL -->
+    <div id="feedbackModal" class="modal hidden" style="z-index:10002;">
+        <div class="card" style="width:380px; max-width:calc(100vw - 32px);">
+            <h2 style="color:var(--accent-text);">💬 Lascia un Feedback</h2>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">Hai un suggerimento o hai trovato un bug? Faccelo sapere!</p>
+            <select id="feedbackCategory" class="feedback-select">
+                <option value="suggerimento">💡 Suggerimento</option>
+                <option value="bug">🐛 Segnala un Bug</option>
+                <option value="complimento">⭐ Complimento</option>
+                <option value="altro">💭 Altro</option>
+            </select>
+            <textarea id="feedbackText" class="feedback-textarea" placeholder="Scrivi qui il tuo messaggio..."></textarea>
+            <button onclick="submitFeedback()" class="btn-main">Invia Feedback</button>
+            <button onclick="closeModal('feedbackModal')" class="btn-secondary">Annulla</button>
+        </div>
+    </div>
 </body>
 </html>

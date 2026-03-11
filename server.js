@@ -90,12 +90,21 @@ const DeletedCommentSchema = new mongoose.Schema({
   postAuthor:  String,
 });
 
+const FeedbackSchema = new mongoose.Schema({
+  text:      { type: String, required: true },
+  category:  { type: String, default: "altro" },
+  username:  { type: String, default: "anonimo" },
+  createdAt: { type: Date, default: Date.now },
+  read:      { type: Boolean, default: false }
+});
+
 const User           = mongoose.model("User",           UserSchema);
 const Post           = mongoose.model("Post",           PostSchema);
 const Friend         = mongoose.model("Friend",         FriendSchema);
 const Comment        = mongoose.model("Comment",        CommentSchema);
 const Reaction       = mongoose.model("Reaction",       ReactionSchema);
 const DeletedComment = mongoose.model("DeletedComment", DeletedCommentSchema);
+const Feedback       = mongoose.model("Feedback",       FeedbackSchema);
 
 // ── MIDDLEWARE ────────────────────────────────────────────────────────────────
 app.use(cors());
@@ -369,6 +378,135 @@ app.post("/friends/accept", auth, async (req, res) => {
 app.post("/friends/reject", auth, async (req, res) => {
   const me = req.user.username, { from } = req.body;
   await Friend.deleteOne({ from, to: me, status: "pending" });
+  res.json({ ok: true });
+});
+
+// ── FEEDBACK ─────────────────────────────────────────────────────────────────
+
+app.post("/feedback", async (req, res) => {
+  const { text, category } = req.body;
+  if (!text || !text.trim()) return res.status(400).send("Testo mancante");
+  let username = "anonimo";
+  if (req.headers.authorization) {
+    try { username = jwt.verify(req.headers.authorization, SECRET).username; } catch {}
+  }
+  await Feedback.create({ text: text.trim(), category: category || "altro", username });
+  res.json({ ok: true });
+});
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+// Accesso tramite ?key=ADMIN_KEY nella query string
+
+const ADMIN_KEY = process.env.ADMIN_KEY || "hunters_admin_2024";
+
+app.get("/admin", (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.status(403).send("Accesso negato");
+  res.send(`<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin – Hunters Universe</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #090b11; color: #e8eaf0; min-height: 100vh; padding: 32px 20px; }
+  h1 { font-size: 26px; font-weight: 700; color: #ffb830; margin-bottom: 6px; letter-spacing: 1px; }
+  p.sub { color: #6b7280; font-size: 14px; margin-bottom: 28px; }
+  .stats { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 30px; }
+  .stat { background: #10131c; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px 22px; }
+  .stat-num { font-size: 28px; font-weight: 700; color: #ffb830; }
+  .stat-label { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .cards { display: flex; flex-direction: column; gap: 12px; }
+  .card { background: #10131c; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 18px; }
+  .card.unread { border-color: rgba(240,154,0,0.3); background: #13160f; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .cat { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .cat.suggerimento { background: rgba(88,101,242,0.15); color: #8891f2; }
+  .cat.bug { background: rgba(239,68,68,0.15); color: #f87171; }
+  .cat.complimento { background: rgba(240,154,0,0.15); color: #ffb830; }
+  .cat.altro { background: rgba(107,114,128,0.15); color: #9ca3af; }
+  .meta { font-size: 12px; color: #6b7280; text-align: right; line-height: 1.6; }
+  .text { font-size: 15px; color: #d1d5db; line-height: 1.6; }
+  .unread-dot { display: inline-block; width: 8px; height: 8px; background: #f09a00; border-radius: 50%; margin-right: 6px; }
+  .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: none; color: #9ca3af; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .filter-btn.active, .filter-btn:hover { border-color: #f09a00; color: #ffb830; }
+  .empty { text-align: center; padding: 40px; color: #4b5268; }
+</style>
+</head>
+<body>
+<h1>🏹 Hunters Universe — Admin</h1>
+<p class="sub">Pannello feedback della community</p>
+<div class="stats" id="stats"></div>
+<div class="filters" id="filters"></div>
+<div class="cards" id="cards"></div>
+<script>
+const KEY = new URLSearchParams(location.search).get('key');
+let allFeedback = [], currentFilter = 'tutti';
+
+async function load() {
+  const r = await fetch('/admin/feedback?key=' + KEY);
+  allFeedback = await r.json();
+  renderStats();
+  renderFilters();
+  render();
+}
+
+function renderStats() {
+  const cats = ['suggerimento','bug','complimento','altro'];
+  const unread = allFeedback.filter(f => !f.read).length;
+  document.getElementById('stats').innerHTML =
+    '<div class="stat"><div class="stat-num">' + allFeedback.length + '</div><div class="stat-label">Totale</div></div>' +
+    '<div class="stat"><div class="stat-num" style="color:#f87171">' + unread + '</div><div class="stat-label">Non letti</div></div>' +
+    cats.map(c => '<div class="stat"><div class="stat-num">' + allFeedback.filter(f=>f.category===c).length + '</div><div class="stat-label">' + c + '</div></div>').join('');
+}
+
+function renderFilters() {
+  const cats = ['tutti','suggerimento','bug','complimento','altro'];
+  document.getElementById('filters').innerHTML = cats.map(c =>
+    '<button class="filter-btn' + (c===currentFilter?' active':'') + '" onclick="setFilter('' + c + '')">' + c.charAt(0).toUpperCase()+c.slice(1) + '</button>'
+  ).join('');
+}
+
+function setFilter(f) { currentFilter = f; renderFilters(); render(); }
+
+function render() {
+  const list = currentFilter === 'tutti' ? allFeedback : allFeedback.filter(f=>f.category===currentFilter);
+  if (!list.length) { document.getElementById('cards').innerHTML = '<div class="empty">Nessun feedback ancora.</div>'; return; }
+  document.getElementById('cards').innerHTML = [...list].reverse().map(f =>
+    '<div class="card' + (f.read?'':' unread') + '" onclick="markRead('' + f._id + '', this)">' +
+    '<div class="card-top">' +
+    '<span class="cat ' + f.category + '">' + (f.read?'':'<span class="unread-dot"></span>') + f.category + '</span>' +
+    '<div class="meta">👤 ' + f.username + '<br>🕐 ' + new Date(f.createdAt).toLocaleString('it') + '</div>' +
+    '</div>' +
+    '<div class="text">' + f.text.replace(/</g,'&lt;') + '</div>' +
+    '</div>'
+  ).join('');
+}
+
+async function markRead(id, el) {
+  await fetch('/admin/feedback/' + id + '/read?key=' + KEY, { method: 'POST' });
+  el.classList.remove('unread');
+  const f = allFeedback.find(f=>f._id===id);
+  if (f) f.read = true;
+  renderStats();
+}
+
+load();
+</script>
+</body>
+</html>`);
+});
+
+app.get("/admin/feedback", async (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.status(403).send("Accesso negato");
+  const feedback = await Feedback.find().sort({ createdAt: -1 });
+  res.json(feedback);
+});
+
+app.post("/admin/feedback/:id/read", async (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.status(403).send("Accesso negato");
+  await Feedback.findByIdAndUpdate(req.params.id, { read: true });
   res.json({ ok: true });
 });
 

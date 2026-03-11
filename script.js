@@ -71,6 +71,12 @@ const BASE_STRINGS = {
     justNow:          "Adesso",
     minutesAgo:       "min fa",
     hoursAgo:         "ore fa",
+    // Tema
+    themeToggleDark:  "☀️ Passa al Tema Chiaro",
+    themeToggleLight: "🌙 Passa al Tema Scuro",
+    // Feedback
+    feedbackSent:     "Grazie per il tuo feedback!",
+    feedbackEmpty:    "Scrivi qualcosa prima di inviare.",
     // Mobile nav
     mobileProfile:    "Profilo",
     mobileFeed:       "Home",
@@ -136,6 +142,21 @@ async function translateAll(langCode) {
 
 // ── STATO ─────────────────────────────────────────────────────────────────────
 let currentLang   = localStorage.getItem("lang") || "it";
+
+// ── THEME ──────────────────────────────────────────────────────────────────
+(function initTheme() {
+    if (localStorage.getItem("theme") === "light") {
+        document.body.classList.add("light-theme");
+    }
+})();
+
+function toggleTheme() {
+    const isLight = document.body.classList.toggle("light-theme");
+    localStorage.setItem("theme", isLight ? "light" : "dark");
+    // Aggiorna testo bottone
+    const btn = document.getElementById("themeToggleBtn");
+    if (btn) btn.innerHTML = isLight ? t.themeToggleLight : t.themeToggleDark;
+}
 let token         = localStorage.getItem("token");
 let currentUser   = JSON.parse(localStorage.getItem("user")) || null;
 let isLoginMode   = true;
@@ -273,7 +294,8 @@ function updateUI() {
                         </button>
                         <div id="langList" class="lang-list hidden">${buildLangList()}</div>
                     </div>
-                    <button onclick="openLogoutConfirm()" class="btn-secondary" style="background:#ff4747; color:white; margin-top:10px">${t.logout}</button>
+                    <button onclick="toggleTheme()" id="themeToggleBtn" class="theme-toggle-btn">${document.body.classList.contains('light-theme') ? t.themeToggleLight : t.themeToggleDark}</button>
+                    <button onclick="openLogoutConfirm()" class="btn-secondary" style="background:var(--danger); color:white; margin-top:6px">${t.logout}</button>
                 </div>
             </div>`;
         rightSidebar.classList.remove("locked");
@@ -396,10 +418,14 @@ async function loadPosts() {
         div.className = "post";
         const imgSrc = imgUrl(post.image);
         div.innerHTML = `
-            <h3>${post.title}</h3>
-            <small>${t.by} ${post.author}</small>
+            <div class="post-header">
+                <h3>${post.title}</h3>
+                <small>${t.by} ${post.author}</small>
+            </div>
             <img src="${imgSrc}" onerror="this.src='${DEFAULT_PFP}'" data-post-id="${post.id}">
-            <div class="post-comment-count" data-post-id="${post.id}">💬 ${commentCount} ${t.comments}</div>`;
+            <div class="post-footer">
+                <div class="post-comment-count" data-post-id="${post.id}">💬 ${commentCount} ${t.comments}</div>
+            </div>`;
         div.querySelector("img").onclick = () => openPostDetail(post);
         div.querySelector(".post-comment-count").onclick = () => openPostDetail(post);
         container.appendChild(div);
@@ -433,7 +459,7 @@ async function openPostDetail(post) {
     currentOpenPostAuthor = post.author;
     const imgSrc = imgUrl(post.image);
 
-    document.getElementById("detailPostTitle").innerText = post.title || "";
+    document.getElementById("detailPostTitle").textContent = post.title || "";
     document.getElementById("detailPostImage").src = imgSrc;
     document.getElementById("detailAuthorName").innerText = post.author || "";
     document.getElementById("detailPostDate").innerText = post.id ? formatDate(post.id) : "";
@@ -916,6 +942,30 @@ function closeMobileSidebars() {
         if (dx > 0 && mobileActive === 'feed')  toggleMobileSidebar('left');
     }, { passive: true });
 })();
+
+// ── FEEDBACK ─────────────────────────────────────────────────────────────────
+
+function openFeedback() {
+    document.getElementById("feedbackText").value = "";
+    document.getElementById("feedbackModal").classList.remove("hidden");
+}
+
+async function submitFeedback() {
+    const text     = document.getElementById("feedbackText").value.trim();
+    const category = document.getElementById("feedbackCategory").value;
+    if (!text) return showAlert(t.feedbackEmpty);
+    const res = await fetch("/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { "Authorization": token } : {}) },
+        body: JSON.stringify({ text, category })
+    });
+    if (res.ok) {
+        closeModal("feedbackModal");
+        showAlert(t.feedbackSent, "success");
+    } else {
+        showAlert(await res.text() || "Errore invio feedback");
+    }
+}
 
 // ── START ─────────────────────────────────────────────────────────────────────
 init();
