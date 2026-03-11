@@ -6,6 +6,7 @@ const multer     = require("multer");
 const mongoose   = require("mongoose");
 const cloudinary = require("cloudinary").v2;
 const stream     = require("stream");
+const path       = require("path");
 require("dotenv").config();
 
 const app    = express();
