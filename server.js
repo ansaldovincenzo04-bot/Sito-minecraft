@@ -786,16 +786,31 @@ const CLASS_ICONS = {hunter:'🏹',guardian:'🛡️',warrior:'⚔️',fighter:'
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 async function doLogin() {
-  const pwd = document.getElementById('pwdInput').value;
-  const r = await fetch('/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pwd}) });
-  if (r.ok) {
-    const d = await r.json();
-    adminToken = d.adminToken;
-    sessionStorage.setItem('adminToken', adminToken);
-    showPanel();
-  } else {
-    document.getElementById('loginErr').textContent = 'Password errata';
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    const pwd = document.getElementById('pwdInput').value;
+    if (!pwd) { document.getElementById('loginErr').textContent = 'Inserisci la password'; btn.textContent='Accedi'; btn.disabled=false; return; }
+    const r = await fetch('/admin/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pwd })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      adminToken = d.adminToken;
+      sessionStorage.setItem('adminToken', adminToken);
+      showPanel();
+    } else {
+      const msg = await r.text();
+      document.getElementById('loginErr').textContent = 'Password errata (' + r.status + ')';
+    }
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'Errore di rete: ' + e.message;
   }
+  btn.textContent = 'Accedi';
+  btn.disabled = false;
 }
 function doLogout() { sessionStorage.removeItem('adminToken'); adminToken = null; document.getElementById('loginPage').style.display='flex'; document.getElementById('adminPanel').style.display='none'; }
 function ah() { return { 'x-admin-token': adminToken }; }
