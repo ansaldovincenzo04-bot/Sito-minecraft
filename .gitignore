@@ -3,3 +3,4 @@ data/
 uploads/
 .envnode_modules/
 .env
+.DS_Store
