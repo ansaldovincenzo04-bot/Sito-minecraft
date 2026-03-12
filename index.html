@@ -37,6 +37,7 @@
         </div>
         <div class="topbar-right">
             <button class="feedback-topbar-btn" onclick="openClanPanel()">🏰 Clan</button>
+            <button class="feedback-topbar-btn" onclick="openModal('translateSettingsModal')">🌐</button>
             <button class="feedback-topbar-btn" onclick="openFeedback()">💬 Feedback</button>
             <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">
                 🔔 <span class="notif-badge hidden" id="notifBadge">0</span>
@@ -315,9 +316,45 @@
                     <div class="profile-achievements-label" id="achievementsLabel">🏆 Achievement</div>
                     <div id="profilePanelAchievements" class="achievements-grid"></div>
                 </div>
+                <button class="btn-secondary" style="font-size:12px;padding:5px 12px;margin-bottom:14px;" onclick="openAchievementsPanelFor(profilePanelUser)">🏆 Achievement</button>
                 <p class="profile-panel-posts-label" id="profilePostsLabel">Post pubblicati</p>
                 <div id="profilePanelPosts" class="profile-posts-grid"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ACHIEVEMENTS PANEL -->
+    <div id="achievementsPanel" class="post-detail hidden" style="z-index:500;">
+        <div style="padding:28px;max-width:680px;margin:auto;position:relative;">
+            <button class="detail-close-btn" onclick="closeAchievementsPanel()">✕</button>
+            <h2 style="font-family:'Rajdhani',sans-serif;font-size:24px;color:var(--accent-text);margin-bottom:4px;">🏆 Achievement</h2>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;" id="achievementsSubtitle"></p>
+            <div class="ach-filter-row" id="achFilterRow"></div>
+            <div id="achievementsPanelGrid" class="achievements-panel-grid"></div>
+        </div>
+    </div>
+
+    <!-- TRANSLATE SETTINGS MODAL -->
+    <div id="translateSettingsModal" class="modal hidden" style="z-index:10003;">
+        <div class="card" style="width:380px;max-width:calc(100vw - 32px);">
+            <h2 style="color:var(--accent-text);">⚙️ Impostazioni Traduzione</h2>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">Scegli cosa tradurre automaticamente</p>
+            <label class="translate-toggle-row">
+                <div>
+                    <div style="font-weight:600;font-size:14px;">Traduci Interfaccia</div>
+                    <div style="font-size:12px;color:var(--text-muted);">Bottoni, menu, etichette del sito</div>
+                </div>
+                <input type="checkbox" id="toggleTranslateUI" class="translate-checkbox" onchange="saveTranslateSettings()">
+            </label>
+            <label class="translate-toggle-row">
+                <div>
+                    <div style="font-weight:600;font-size:14px;">Traduci Contenuti Players</div>
+                    <div style="font-size:12px;color:var(--text-muted);">Mostra bottone "Traduci" su post e commenti</div>
+                </div>
+                <input type="checkbox" id="toggleTranslateContent" class="translate-checkbox" onchange="saveTranslateSettings()">
+            </label>
+            <button onclick="closeModal('translateSettingsModal');location.reload();" class="btn-main" style="margin-top:16px">Applica</button>
+            <button onclick="closeModal('translateSettingsModal')" class="btn-secondary">Chiudi</button>
         </div>
     </div>
 
@@ -338,6 +375,7 @@
         </div>
     </div>
 
+    <script src="strings.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
