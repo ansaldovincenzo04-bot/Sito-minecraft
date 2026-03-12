@@ -81,6 +81,32 @@ const BASE_STRINGS = {
     mobileProfile:    "Profilo",
     mobileFeed:       "Home",
     mobileFriends:    "Amici",
+    // Feed tabs
+    tabAll:           "🏠 Feed",
+    tabSaved:         "🔖 Salvati",
+    tabFriends:       "👥 Amici",
+    tabLeaderboard:   "🏆 Classifica",
+    // Leaderboard
+    leaderboardTitle: "🏆 Classifica Settimanale",
+    leaderboardSub:   "Top 10 utenti per like ricevuti questa settimana",
+    leaderboardEmpty: "Nessun dato disponibile ancora.",
+    // Achievements
+    achievementsLabel:"🏆 Achievement",
+    achievementLocked:"Bloccato",
+    // Clan
+    clanTitle:        "🏰 Il tuo Clan",
+    clanNone:         "Non sei in nessun clan.",
+    clanCreate:       "Crea Clan",
+    clanJoin:         "Unisciti a un Clan",
+    clanLeave:        "Lascia il Clan",
+    clanMembers:      "Membri",
+    clanSearch:       "Cerca clan...",
+    clanNameLabel:    "Nome clan",
+    clanTagLabel:     "Tag (2-5 caratteri)",
+    clanDescLabel:    "Descrizione (opzionale)",
+    clanCreateBtn:    "Crea",
+    clanJoinBtn:      "Unisciti",
+    clanLeader:       "👑 Leader",
 };
 
 const LANGUAGES = [
@@ -105,7 +131,7 @@ const LANGUAGES = [
 let t = { ...BASE_STRINGS };
 
 // Versione cache — incrementa ogni volta che aggiungi stringhe a BASE_STRINGS
-const STRINGS_VERSION = "v4";
+const STRINGS_VERSION = "v5";
 
 async function translateAll(langCode) {
     if (langCode === "it") return { ...BASE_STRINGS };
@@ -243,6 +269,7 @@ function switchTab(tab) {
     currentTab = tab;
     document.getElementById("tabAll").classList.toggle("active", tab === "all");
     document.getElementById("tabSaved").classList.toggle("active", tab === "saved");
+    document.getElementById("tabFriends").classList.toggle("active", tab === "friends");
     loadPosts();
 }
 
@@ -464,6 +491,12 @@ function applyStaticTranslations() {
     document.getElementById("cancelRemoveNo")?.setAttribute("innerText", t.cancel);
     const postsLbl = document.getElementById("profilePostsLabel");
     if (postsLbl) postsLbl.innerText = t.postsPublished;
+    const tabFr = document.getElementById("tabFriends");
+    if (tabFr) tabFr.innerText = t.tabFriends;
+    const tabLb = document.getElementById("tabLeaderboard");
+    if (tabLb) tabLb.innerText = t.tabLeaderboard;
+    const achLbl = document.getElementById("achievementsLabel");
+    if (achLbl) achLbl.innerText = t.achievementsLabel;
     // Mobile nav labels
     const mnlP = document.getElementById("mobileNavLabelProfile");
     const mnlF = document.getElementById("mobileNavLabelFeed");
@@ -683,9 +716,11 @@ async function loadPosts(search) {
     container.innerHTML = "";
 
     let filtered = [...posts].reverse();
-    // Saved tab filter
+    // Tab filters
     if (currentTab === "saved") {
         filtered = filtered.filter(p => p.savedByMe);
+    } else if (currentTab === "friends") {
+        filtered = filtered.filter(p => myFriends.has(p.author));
     }
     if (filtered.length === 0) {
         container.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:40px;font-size:14px;">${currentTab === "saved" ? "🔖 Nessun post salvato" : "Nessun post trovato"}</div>`;
@@ -1192,6 +1227,8 @@ document.getElementById("popoverRemoveFriend").onclick = () => {
 
 // ── USER PROFILE PANEL ────────────────────────────────────────────────────────
 
+function openProfilePanel(username) { openUserProfile(username); }
+
 async function openUserProfile(username) {
     profilePanelUser = username;
     panelStack = ["profile"];
@@ -1224,6 +1261,10 @@ async function openUserProfile(username) {
                 <div class="level-bar-track"><div class="level-bar-fill" style="width:${pct}%"></div></div>
             </div>`;
     }
+
+    // Achievements
+    loadAchievements(username);
+    loadClanBadge(username);
 
     // Griglia post
     const grid = document.getElementById("profilePanelPosts");
@@ -1359,6 +1400,215 @@ async function submitFeedback() {
         showAlert(t.feedbackSent, "success");
     } else {
         showAlert(await res.text() || "Errore invio feedback");
+    }
+}
+
+// ── LEADERBOARD ──────────────────────────────────────────────────────────────
+
+async function openLeaderboard() {
+    const panel = document.getElementById("leaderboardPanel");
+    panel.classList.remove("hidden");
+    document.getElementById("leaderboardList").innerHTML = "<div style='text-align:center;padding:30px;color:var(--text-muted)'>⏳ Caricamento...</div>";
+    const res = await fetch("/leaderboard/weekly");
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = document.getElementById("leaderboardList");
+    if (!data.length) { list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:24px">${t.leaderboardEmpty}</div>`; return; }
+    const medals = ["🥇","🥈","🥉"];
+    list.innerHTML = data.map((u, i) => `
+        <div class="leaderboard-item" onclick="openProfilePanel('${escapeHtml(u.username)}')">
+            <div class="lb-rank">${medals[i] || (i+1)}</div>
+            <img class="lb-avatar" src="${imgUrl(u.profileImage)}" onerror="this.src='${DEFAULT_PFP}'">
+            <div class="lb-info">
+                <div class="lb-username">${escapeHtml(u.username)}</div>
+                <div class="lb-rank-badge">${rankBadgeHTML(u.level||1, u.rank||"Player", u.tier||0)}</div>
+            </div>
+            <div class="lb-ups">👍 ${u.ups}</div>
+        </div>`).join("");
+}
+
+function closeLeaderboard() {
+    document.getElementById("leaderboardPanel").classList.add("hidden");
+}
+
+// ── CLAN ─────────────────────────────────────────────────────────────────────
+
+let myClan = null;
+
+async function openClanPanel() {
+    document.getElementById("clanPanel").classList.remove("hidden");
+    await refreshClanPanel();
+}
+
+function closeClanPanel() {
+    document.getElementById("clanPanel").classList.add("hidden");
+}
+
+async function refreshClanPanel() {
+    const content = document.getElementById("clanPanelContent");
+    content.innerHTML = "<div style='text-align:center;padding:30px;color:var(--text-muted)'>⏳ Caricamento...</div>";
+    if (!token) {
+        content.innerHTML = "<p style='color:var(--text-muted);text-align:center;padding:24px'>Accedi per vedere i clan.</p>";
+        return;
+    }
+    const res = await fetch("/clan/my", { headers: { "Authorization": token } });
+    myClan = res.ok ? await res.json() : null;
+
+    if (myClan) {
+        renderMyClan(myClan);
+    } else {
+        renderClanBrowser();
+    }
+}
+
+function renderMyClan(clan) {
+    const isLeader = clan.leader === (currentUser && currentUser.username);
+    const content = document.getElementById("clanPanelContent");
+    content.innerHTML = `
+        <div class="clan-header">
+            <div class="clan-tag-big">[${escapeHtml(clan.tag)}]</div>
+            <div>
+                <h2 class="clan-name-big">${escapeHtml(clan.name)}</h2>
+                <p class="clan-desc">${escapeHtml(clan.description || "")}</p>
+            </div>
+        </div>
+        <div class="clan-members-section">
+            <div class="clan-section-title">${t.clanMembers} (${clan.members.length})</div>
+            <div id="clanMembersList" class="clan-members-list"></div>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger)" onclick="leaveClan()">${t.clanLeave}</button>
+        </div>`;
+
+    const membersList = document.getElementById("clanMembersList");
+    clan.members.forEach(username => {
+        const div = document.createElement("div");
+        div.className = "clan-member-item";
+        div.innerHTML = `
+            <img src="${DEFAULT_PFP}" class="clan-member-avatar">
+            <span class="clan-member-name" onclick="openProfilePanel('${escapeHtml(username)}')" style="cursor:pointer">${escapeHtml(username)}</span>
+            ${username === clan.leader ? `<span class="clan-leader-badge">${t.clanLeader}</span>` : ""}
+            ${isLeader && username !== clan.leader ? `<button class="clan-kick-btn" onclick="kickFromClan('${escapeHtml(username)}')">✕</button>` : ""}`;
+        fetch(`/users/profile/${encodeURIComponent(username)}`).then(r => r.ok ? r.json() : null).then(u => {
+            if (u && u.profileImage) div.querySelector("img").src = imgUrl(u.profileImage);
+        });
+        membersList.appendChild(div);
+    });
+}
+
+function renderClanBrowser() {
+    const content = document.getElementById("clanPanelContent");
+    content.innerHTML = `
+        <h2 style="font-family:'Rajdhani',sans-serif;font-size:22px;color:var(--accent-text);margin-bottom:16px;">🏰 Clan</h2>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">${t.clanNone}</p>
+        <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+            <button class="btn-main" onclick="showCreateClanForm()">${t.clanCreate}</button>
+        </div>
+        <div style="margin-bottom:12px;">
+            <input type="text" id="clanSearchInput" class="custom-input" placeholder="🔍 ${t.clanSearch}" oninput="searchClans(this.value)">
+        </div>
+        <div id="clanSearchResults" class="clan-search-results"></div>`;
+    searchClans("");
+}
+
+async function searchClans(q) {
+    const res = await fetch(`/clan/search?q=${encodeURIComponent(q)}`);
+    const clans = await res.json();
+    const container = document.getElementById("clanSearchResults");
+    if (!container) return;
+    if (!clans.length) { container.innerHTML = "<p style='color:var(--text-muted);font-size:13px;text-align:center;padding:16px'>Nessun clan trovato</p>"; return; }
+    container.innerHTML = clans.map(c => `
+        <div class="clan-search-item">
+            <div class="clan-tag-small">[${escapeHtml(c.tag)}]</div>
+            <div class="clan-search-info">
+                <div class="clan-search-name">${escapeHtml(c.name)}</div>
+                <div class="clan-search-desc">${escapeHtml(c.description||"")} · ${c.members.length} membri</div>
+            </div>
+            <button class="btn-main" style="padding:6px 14px;font-size:12px" onclick="joinClan('${escapeHtml(c.name)}')">${t.clanJoinBtn}</button>
+        </div>`).join("");
+}
+
+function showCreateClanForm() {
+    const content = document.getElementById("clanPanelContent");
+    content.innerHTML = `
+        <button class="btn-secondary" style="margin-bottom:16px" onclick="refreshClanPanel()">← Indietro</button>
+        <h2 style="font-family:'Rajdhani',sans-serif;font-size:22px;color:var(--accent-text);margin-bottom:20px;">👑 ${t.clanCreate}</h2>
+        <input type="text" id="clanNameInput" class="custom-input" placeholder="${t.clanNameLabel}..." maxlength="30">
+        <input type="text" id="clanTagInput" class="custom-input" placeholder="${t.clanTagLabel}..." maxlength="5" style="text-transform:uppercase">
+        <textarea id="clanDescInput" class="custom-input" placeholder="${t.clanDescLabel}..." style="resize:vertical;min-height:60px;max-length:200"></textarea>
+        <button class="btn-main" onclick="createClan()">${t.clanCreateBtn}</button>`;
+}
+
+async function createClan() {
+    const name = document.getElementById("clanNameInput").value.trim();
+    const tag  = document.getElementById("clanTagInput").value.trim().toUpperCase();
+    const desc = document.getElementById("clanDescInput").value.trim();
+    if (!name || !tag) return showAlert("Nome e tag obbligatori");
+    const res = await fetch("/clan/create", {
+        method: "POST",
+        headers: { "Authorization": token, "Content-Type": "application/json" },
+        body: JSON.stringify({ name, tag, description: desc })
+    });
+    if (res.ok) { await refreshClanPanel(); }
+    else { showAlert(await res.text()); }
+}
+
+async function joinClan(name) {
+    const res = await fetch("/clan/join", {
+        method: "POST",
+        headers: { "Authorization": token, "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+    });
+    if (res.ok) { await refreshClanPanel(); }
+    else { showAlert(await res.text()); }
+}
+
+async function leaveClan() {
+    const res = await fetch("/clan/leave", {
+        method: "POST",
+        headers: { "Authorization": token, "Content-Type": "application/json" }
+    });
+    if (res.ok) { myClan = null; await refreshClanPanel(); }
+    else { showAlert(await res.text()); }
+}
+
+async function kickFromClan(username) {
+    const res = await fetch("/clan/kick", {
+        method: "POST",
+        headers: { "Authorization": token, "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+    });
+    if (res.ok) { await refreshClanPanel(); }
+    else { showAlert(await res.text()); }
+}
+
+// ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+
+async function loadAchievements(username) {
+    const res = await fetch(`/users/${encodeURIComponent(username)}/achievements`);
+    if (!res.ok) return;
+    const achievements = await res.json();
+    const grid = document.getElementById("profilePanelAchievements");
+    if (!grid) return;
+    grid.innerHTML = achievements.map(a => `
+        <div class="achievement-badge ${a.unlocked ? "unlocked" : "locked"}" title="${escapeHtml(a.name)}: ${escapeHtml(a.desc)}">
+            <div class="achievement-icon">${a.unlocked ? a.icon : "🔒"}</div>
+            <div class="achievement-name">${escapeHtml(a.name)}</div>
+        </div>`).join("");
+}
+
+async function loadClanBadge(username) {
+    const res = await fetch(`/clan/search?q=`);
+    if (!res.ok) return;
+    const clans = await res.json();
+    const clan = clans.find(c => c.members.includes(username));
+    const el = document.getElementById("profilePanelClan");
+    if (!el) return;
+    if (clan) {
+        el.style.display = "block";
+        el.innerHTML = `<span class="clan-tag-profile">[${escapeHtml(clan.tag)}]</span> <span class="clan-name-profile">${escapeHtml(clan.name)}</span>`;
+    } else {
+        el.style.display = "none";
     }
 }
 

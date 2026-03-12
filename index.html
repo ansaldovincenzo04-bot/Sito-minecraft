@@ -36,6 +36,7 @@
             </div>
         </div>
         <div class="topbar-right">
+            <button class="feedback-topbar-btn" onclick="openClanPanel()">🏰 Clan</button>
             <button class="feedback-topbar-btn" onclick="openFeedback()">💬 Feedback</button>
             <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">
                 🔔 <span class="notif-badge hidden" id="notifBadge">0</span>
@@ -76,6 +77,8 @@
             <div class="feed-tabs" id="feedTabs">
                 <button class="feed-tab active" id="tabAll" onclick="switchTab('all')">🏠 Feed</button>
                 <button class="feed-tab" id="tabSaved" onclick="switchTab('saved')">🔖 Salvati</button>
+                <button class="feed-tab" id="tabFriends" onclick="switchTab('friends')">👥 Amici</button>
+                <button class="feed-tab" id="tabLeaderboard" onclick="openLeaderboard()">🏆 Classifica</button>
             </div>
 
             <div id="posts"></div>
@@ -138,6 +141,23 @@
                     <input type="text" id="editPostTitle" class="custom-input" placeholder="Nuovo titolo...">
                     <button onclick="submitEditPost()" class="btn-main">Salva Modifiche</button>
                     <button onclick="closeEditPost()" class="btn-secondary">Annulla</button>
+                </div>
+            </div>
+            <!-- LEADERBOARD PANEL -->
+            <div id="leaderboardPanel" class="post-detail hidden" style="z-index:500;">
+                <div style="padding:28px;max-width:560px;margin:auto;position:relative;">
+                    <button class="detail-close-btn" onclick="closeLeaderboard()">✕</button>
+                    <h2 style="font-family:'Rajdhani',sans-serif;font-size:24px;color:var(--accent-text);margin-bottom:4px;">🏆 Classifica Settimanale</h2>
+                    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;" id="leaderboardSubtitle">Top 10 utenti per like ricevuti questa settimana</p>
+                    <div id="leaderboardList"></div>
+                </div>
+            </div>
+
+            <!-- CLAN PANEL -->
+            <div id="clanPanel" class="post-detail hidden" style="z-index:500;">
+                <div style="padding:28px;max-width:560px;margin:auto;position:relative;">
+                    <button class="detail-close-btn" onclick="closeClanPanel()">✕</button>
+                    <div id="clanPanelContent"></div>
                 </div>
             </div>
         </main>
@@ -287,6 +307,13 @@
                         <div id="profilePanelBio" class="profile-bio"></div>
                         <div id="profilePanelStats" class="profile-panel-stats"></div>
                     </div>
+                </div>
+                <!-- Clan badge -->
+                <div id="profilePanelClan" class="profile-clan-badge" style="display:none"></div>
+                <!-- Achievements -->
+                <div class="profile-achievements-section">
+                    <div class="profile-achievements-label" id="achievementsLabel">🏆 Achievement</div>
+                    <div id="profilePanelAchievements" class="achievements-grid"></div>
                 </div>
                 <p class="profile-panel-posts-label" id="profilePostsLabel">Post pubblicati</p>
                 <div id="profilePanelPosts" class="profile-posts-grid"></div>

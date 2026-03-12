@@ -1202,3 +1202,84 @@ body.light-theme ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 @media (max-width: 400px) {
     .class-grid { grid-template-columns: 1fr; }
 }
+
+/* ══════════════════════════════════════════════════════
+   LEADERBOARD
+══════════════════════════════════════════════════════ */
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+}
+.leaderboard-item:hover { border-color: var(--accent); background: var(--surface-2); }
+.lb-rank { font-size: 22px; min-width: 32px; text-align: center; }
+.lb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.1); }
+.lb-info { flex: 1; }
+.lb-username { font-weight: 700; font-size: 15px; color: var(--text); }
+.lb-rank-badge { margin-top: 2px; }
+.lb-ups { font-size: 14px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+/* ══════════════════════════════════════════════════════
+   ACHIEVEMENTS
+══════════════════════════════════════════════════════ */
+.profile-achievements-section { margin-bottom: 20px; }
+.profile-achievements-label { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent-text); margin-bottom: 10px; letter-spacing: .5px; }
+.achievements-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.achievement-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.07);
+    background: var(--surface);
+    min-width: 64px;
+    text-align: center;
+    cursor: default;
+    transition: transform .2s, border-color .2s;
+}
+.achievement-badge.unlocked { border-color: rgba(240,154,0,.35); background: rgba(240,154,0,.05); }
+.achievement-badge.locked   { opacity: .45; }
+.achievement-badge:hover    { transform: translateY(-2px); }
+.achievement-icon { font-size: 22px; }
+.achievement-name { font-size: 10px; font-weight: 600; color: var(--text-muted); line-height: 1.2; }
+
+/* ══════════════════════════════════════════════════════
+   CLAN
+══════════════════════════════════════════════════════ */
+.clan-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+.clan-tag-big { font-family: 'Rajdhani',sans-serif; font-size: 28px; font-weight: 700; color: var(--accent); background: rgba(240,154,0,.1); border: 1px solid rgba(240,154,0,.3); border-radius: 8px; padding: 4px 12px; white-space: nowrap; }
+.clan-name-big { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.clan-desc { font-size: 13px; color: var(--text-muted); }
+.clan-section-title { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: var(--accent-text); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+.clan-members-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+.clan-member-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); border-radius: 10px; border: 1px solid rgba(255,255,255,.05); }
+.clan-member-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.clan-member-name { flex: 1; font-size: 14px; font-weight: 600; }
+.clan-leader-badge { font-size: 11px; color: var(--accent); font-weight: 700; }
+.clan-kick-btn { background: none; border: 1px solid rgba(239,68,68,.3); color: #f87171; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; }
+.clan-kick-btn:hover { background: rgba(239,68,68,.1); }
+.clan-search-results { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.clan-search-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid rgba(255,255,255,.06); border-radius: 12px; }
+.clan-tag-small { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: var(--accent); background: rgba(240,154,0,.1); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.clan-search-info { flex: 1; }
+.clan-search-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.clan-search-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.profile-clan-badge { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.clan-tag-profile { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: var(--accent); background: rgba(240,154,0,.1); border: 1px solid rgba(240,154,0,.25); border-radius: 6px; padding: 2px 8px; }
+.clan-name-profile { font-size: 13px; color: var(--text-muted); }
+
+/* Light theme overrides */
+body.light-theme .leaderboard-item { background: #f8f9fa; border-color: #e5e7eb; }
+body.light-theme .achievement-badge { background: #f8f9fa; border-color: #e5e7eb; }
+body.light-theme .achievement-badge.unlocked { background: rgba(240,154,0,.08); border-color: rgba(240,154,0,.3); }
+body.light-theme .clan-member-item { background: #f8f9fa; }
+body.light-theme .clan-search-item { background: #f8f9fa; }
