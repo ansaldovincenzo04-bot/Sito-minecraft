@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <!-- MOBILE BOTTOM NAV -->
     <div class="mobile-nav" id="mobileNav">
         <button class="mobile-nav-btn" id="mobileNavProfile" onclick="toggleMobileSidebar('left')">
@@ -27,34 +26,13 @@
         </button>
     </div>
 
-    <!-- TOPBAR -->
     <div class="topbar">
         <div class="logo">HUNTERS UNIVERSE</div>
-        <div class="topbar-center">
-            <div class="search-wrap">
-                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Cerca post o utenti...">
-            </div>
-        </div>
-        <div class="topbar-right">
-            <button class="feedback-topbar-btn" onclick="openFeedback()">💬 Feedback</button>
-            <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">
-                🔔 <span class="notif-badge hidden" id="notifBadge">0</span>
-            </button>
-            <div id="authArea"></div>
-        </div>
-    </div>
-
-    <!-- NOTIFICHE PANEL -->
-    <div id="notifPanel" class="notif-panel hidden">
-        <div class="notif-panel-header">
-            <span id="notifPanelTitle">Notifiche</span>
-            <button class="notif-read-all" id="notifReadAll" onclick="markAllNotifsRead()">✓ Segna tutte lette</button>
-        </div>
-        <div id="notifList" class="notif-list"></div>
+        <button class="feedback-topbar-btn" onclick="openFeedback()">💬 Feedback</button>
+        <div id="authArea"></div>
     </div>
 
     <div class="container">
-        <!-- SIDEBAR SINISTRA -->
         <aside class="left">
             <h3 id="label-profile" class="sidebar-header">Profilo</h3>
             <p id="label-your-imgs" class="sidebar-subheader">Le tue immagini:</p>
@@ -65,19 +43,7 @@
             </div>
         </aside>
 
-        <!-- FEED -->
         <main>
-            <!-- SEARCH BAR FEED (mobile) -->
-            <div class="feed-search-mobile">
-                <input type="text" id="searchInputMobile" class="search-input" placeholder="🔍 Cerca post o utenti...">
-            </div>
-
-            <!-- SAVED TOGGLE -->
-            <div class="feed-tabs" id="feedTabs">
-                <button class="feed-tab active" id="tabAll" onclick="switchTab('all')">🏠 Feed</button>
-                <button class="feed-tab" id="tabSaved" onclick="switchTab('saved')">🔖 Salvati</button>
-            </div>
-
             <div id="posts"></div>
 
             <!-- POST DETAIL PANEL -->
@@ -89,24 +55,13 @@
                             <img id="detailAuthorAvatar" src="">
                             <div>
                                 <div id="detailAuthorName"></div>
-                                <div id="detailAuthorRank" class="detail-rank-badge"></div>
                                 <div id="detailPostDate"></div>
                             </div>
                         </div>
                         <h2 id="detailPostTitle" class="detail-title"></h2>
-                        <!-- Carosello immagini -->
-                        <div class="detail-carousel" id="detailCarousel">
+                        <div style="flex:1;min-height:0;display:flex;align-items:center;overflow:hidden;">
                             <img id="detailPostImage" src="" class="detail-img">
-                            <div class="carousel-nav hidden" id="carouselNav">
-                                <button class="carousel-btn" id="carouselPrev">‹</button>
-                                <span class="carousel-counter" id="carouselCounter">1 / 1</span>
-                                <button class="carousel-btn" id="carouselNext">›</button>
-                            </div>
                         </div>
-                        <!-- Post reactions -->
-                        <div class="post-reactions-row" id="postReactionsRow"></div>
-                        <!-- Save button -->
-                        <button class="save-post-btn" id="savePostBtn" onclick="toggleSavePost()">🔖 Salva Post</button>
                     </div>
                     <div class="post-detail-right">
                         <div class="comments-header">
@@ -120,29 +75,19 @@
                         <div class="comment-input-area" id="commentInputArea">
                             <img id="commentMeAvatar" src="">
                             <div class="comment-input-wrap">
-                                <textarea id="commentText" placeholder="Scrivi un commento... (@username per menzionare)"></textarea>
+                                <textarea id="commentText" placeholder="Scrivi un commento..."></textarea>
                                 <code>Ctrl+Enter per inviare</code>
                             </div>
                             <button id="submitComment">Pubblica</button>
+                                        </div>
+                        <div id="commentLoginMsg" class="comment-login-msg hidden">
+                            Accedi per commentare
                         </div>
-                        <div id="commentLoginMsg" class="comment-login-msg hidden">Accedi per commentare</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- EDIT POST PANEL -->
-            <div id="editPostPanel" class="post-detail hidden" style="z-index:600;">
-                <div style="padding:32px;max-width:400px;margin:auto;">
-                    <button class="detail-close-btn" onclick="closeEditPost()">✕</button>
-                    <h2 style="font-family:'Rajdhani',sans-serif;font-size:22px;margin-bottom:20px;color:var(--accent-text);">✏️ Modifica Post</h2>
-                    <input type="text" id="editPostTitle" class="custom-input" placeholder="Nuovo titolo...">
-                    <button onclick="submitEditPost()" class="btn-main">Salva Modifiche</button>
-                    <button onclick="closeEditPost()" class="btn-secondary">Annulla</button>
                 </div>
             </div>
         </main>
 
-        <!-- SIDEBAR DESTRA — AMICI -->
         <aside class="right">
             <h3 id="friendsHeader" class="sidebar-header">Amici</h3>
             <div class="friend-search-wrap">
@@ -173,36 +118,6 @@
         </div>
     </div>
 
-    <!-- SCELTA CLASSE MODAL (appare dopo il register) -->
-    <div id="classChoiceModal" class="modal hidden" style="z-index:10005;">
-        <div class="card class-choice-card">
-            <h2 style="color:var(--accent-text);text-align:center;margin-bottom:6px;">⚔️ Scegli la tua Classe</h2>
-            <p style="color:var(--text-muted);font-size:13px;text-align:center;margin-bottom:24px;">Questa scelta determinerà il tuo percorso di rank. Non potrai cambiarla.</p>
-            <div class="class-grid">
-                <div class="class-card" onclick="chooseClass('hunter')">
-                    <div class="class-icon">🏹</div>
-                    <div class="class-name">Hunter</div>
-                    <div class="class-path">Player → Hunter → Supreme Hunter → Ultimate Hunter → Supreme Predator</div>
-                </div>
-                <div class="class-card" onclick="chooseClass('guardian')">
-                    <div class="class-icon">🛡️</div>
-                    <div class="class-name">Guardian</div>
-                    <div class="class-path">Player → Guardian → Supreme Guardian → Ultimate Guardian → Bloodline Leader</div>
-                </div>
-                <div class="class-card" onclick="chooseClass('warrior')">
-                    <div class="class-icon">⚔️</div>
-                    <div class="class-name">Warrior</div>
-                    <div class="class-path">Player → Warrior → Supreme Warrior → Ultimate Warrior → Vanquisher Warrior</div>
-                </div>
-                <div class="class-card" onclick="chooseClass('fighter')">
-                    <div class="class-icon">🥊</div>
-                    <div class="class-name">Fighter</div>
-                    <div class="class-path">Player → Fighter → Supreme Fighter → Ultimate Fighter → Paramount Archer</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- EDIT PROFILE MODAL -->
     <div id="editProfileModal" class="modal hidden">
         <div class="card">
@@ -213,7 +128,6 @@
                 <input type="file" id="editPfpFile" style="display:none" accept="image/*">
             </div>
             <input type="text" id="editUsernameInput" class="custom-input" placeholder="Nuovo Username">
-            <textarea id="editBioInput" class="custom-input" placeholder="Bio (max 200 caratteri)..." style="resize:vertical;min-height:70px;"></textarea>
             <button id="submitEditProfile" class="btn-main">Salva Modifiche</button>
             <button id="cancelEdit" onclick="closeModal('editProfileModal')" class="btn-secondary">Annulla</button>
         </div>
@@ -221,15 +135,14 @@
 
     <!-- CREATE POST MODAL -->
     <div id="createModal" class="modal hidden">
-        <div class="card" style="width:400px;max-width:calc(100vw - 32px);">
+        <div class="card">
             <h2 id="createPostTitle">Nuovo Post</h2>
             <input type="text" id="postTitle" class="custom-input" placeholder="Titolo...">
             <div class="input-group">
-                <input type="text" id="postImageUrl" class="inline-input" placeholder="URL immagine...">
-                <label for="postImageFile" class="inline-file-btn" title="Carica fino a 5 immagini">📁</label>
-                <input type="file" id="postImageFile" style="display:none" accept="image/*" multiple>
+                <input type="text" id="postImageUrl" class="inline-input" placeholder="URL o Nome File...">
+                <label for="postImageFile" class="inline-file-btn">📁</label>
+                <input type="file" id="postImageFile" style="display:none" accept="image/*">
             </div>
-            <div id="imagePreviewGrid" class="image-preview-grid hidden"></div>
             <button id="submitPost" class="btn-main">Pubblica</button>
             <button id="cancelCreate" onclick="closeModal('createModal')" class="btn-secondary">Annulla</button>
         </div>
@@ -239,16 +152,16 @@
     <div id="logoutConfirmModal" class="modal hidden">
         <div class="card">
             <h2 id="logoutConfirmTitle">Sei sicuro?</h2>
-            <button id="yesLogoutBtn" onclick="confirmLogout()" class="btn-main" style="background:var(--danger)">Sì, Esci</button>
+            <button id="yesLogoutBtn" onclick="confirmLogout()" class="btn-main" style="background:#ff4747">Sì, Esci</button>
             <button id="cancelLogout" onclick="closeModal('logoutConfirmModal')" class="btn-secondary">Annulla</button>
         </div>
     </div>
 
     <!-- ALERT MODAL -->
-    <div id="alertModal" class="modal hidden" style="z-index:10001;">
-        <div class="card" style="text-align:center; border-color:#ff4747;">
-            <h2 id="alertTitle" style="color:#ff4747;">Attenzione</h2>
-            <p id="alertMessage" style="margin-bottom:20px;"></p>
+    <div id="alertModal" class="modal hidden" style="z-index: 10001;">
+        <div class="card" style="text-align:center; border-color: #ff4747;">
+            <h2 id="alertTitle" style="color: #ff4747;">Attenzione</h2>
+            <p id="alertMessage" style="margin-bottom: 20px;"></p>
             <button id="alertOkBtn" onclick="closeModal('alertModal')" class="btn-main">OK</button>
         </div>
     </div>
@@ -259,46 +172,51 @@
         <button id="popoverRemoveFriend" class="popover-btn danger">💔 Rimuovi Amico</button>
     </div>
 
-    <!-- CONFIRM REMOVE FRIEND -->
+    <!-- CONFIRM REMOVE FRIEND MODAL -->
     <div id="confirmRemoveModal" class="modal hidden">
         <div class="card" style="text-align:center;">
-            <div style="font-size:36px;margin-bottom:10px;">💔</div>
+            <div style="font-size:36px; margin-bottom:10px;">💔</div>
             <h2 id="confirmRemoveTitle" style="margin-bottom:8px;">Rimuovi Amico</h2>
-            <p id="confirmRemoveDesc" style="color:#888;font-size:14px;margin-bottom:20px;"></p>
-            <div style="display:flex;gap:10px;">
-                <button id="confirmRemoveYes" class="btn-main" style="background:var(--danger);flex:1;">Sì, Rimuovi</button>
-                <button onclick="closeModal('confirmRemoveModal')" class="btn-secondary" style="flex:1;margin-top:0;">Annulla</button>
+            <p id="confirmRemoveDesc" style="color:#888; font-size:14px; margin-bottom:20px;"></p>
+            <div style="display:flex; gap:10px;">
+                <button id="confirmRemoveYes" class="btn-main" style="background:#ff4747; flex:1;">Sì, Rimuovi</button>
+                <button id="cancelRemoveNo" onclick="closeModal('confirmRemoveModal')" class="btn-secondary" style="flex:1; margin-top:0;">Annulla</button>
             </div>
         </div>
     </div>
 
-    <!-- USER PROFILE PANEL -->
+    <!-- USER PROFILE PANEL (inside main, added by JS) -->
     <div id="userProfilePanel" class="post-detail hidden">
         <div class="post-detail-inner profile-panel-inner">
             <button class="profile-panel-close" id="profilePanelClose">✕</button>
             <div class="profile-panel-content">
+                <!-- Header profilo -->
                 <div class="profile-panel-header">
                     <div class="profile-panel-avatar-wrap">
                         <img id="profilePanelAvatar" src="" class="profile-panel-avatar">
                     </div>
                     <div class="profile-panel-info">
                         <h1 id="profilePanelUsername" class="profile-panel-name"></h1>
-                        <div id="profilePanelRank" class="profile-rank-badge"></div>
-                        <div id="profilePanelBio" class="profile-bio"></div>
                         <div id="profilePanelStats" class="profile-panel-stats"></div>
+                        <div class="profile-panel-reactions">
+                            <span class="profile-reaction-badge up">👍 <span id="profileTotalUps">0</span></span>
+                            <span class="profile-reaction-badge down">👎 <span id="profileTotalDowns">0</span></span>
+                        </div>
                     </div>
                 </div>
+                <!-- Post grid -->
                 <p class="profile-panel-posts-label" id="profilePostsLabel">Post pubblicati</p>
                 <div id="profilePanelPosts" class="profile-posts-grid"></div>
             </div>
         </div>
     </div>
 
+    <script src="script.js"></script>
     <!-- FEEDBACK MODAL -->
     <div id="feedbackModal" class="modal hidden" style="z-index:10002;">
-        <div class="card" style="width:380px;max-width:calc(100vw - 32px);">
+        <div class="card" style="width:380px; max-width:calc(100vw - 32px);">
             <h2 style="color:var(--accent-text);">💬 Lascia un Feedback</h2>
-            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Hai un suggerimento o trovato un bug? Faccelo sapere!</p>
+            <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">Hai un suggerimento o hai trovato un bug? Faccelo sapere!</p>
             <select id="feedbackCategory" class="feedback-select">
                 <option value="suggerimento">💡 Suggerimento</option>
                 <option value="bug">🐛 Segnala un Bug</option>
@@ -310,7 +228,5 @@
             <button onclick="closeModal('feedbackModal')" class="btn-secondary">Annulla</button>
         </div>
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>

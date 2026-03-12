@@ -172,12 +172,6 @@ let profilePanelUser      = null;   // username del profilo aperto
 let panelStack            = [];     // ['profile', 'comments'] per navigazione
 let commentsPollingInterval = null;
 const DEFAULT_PFP = "/uploads/default-avatar.png";
-let currentTab         = "all";    // "all" | "saved"
-let currentPostImages  = [];       // carosello immagini post aperto
-let carouselIndex      = 0;        // indice corrente carosello
-let notifPollInterval  = null;
-let editPostId         = null;
-let linkPreviewCache   = {};       // cache URL → preview data
 
 // Gestisce sia URL Cloudinary (https://...) che vecchi path locali (/uploads/...)
 function imgUrl(src) {
@@ -209,9 +203,7 @@ async function init() {
             } else {
                 // Aggiorna i dati utente freschi dal server
                 const fresh = await res.json();
-                currentUser = { ...currentUser, ...fresh,
-                    userClass: fresh.userClass||"", classChosen: fresh.classChosen||false,
-                    level: fresh.level||1, rank: fresh.rank||"Player", tier: fresh.tier||0 };
+                currentUser = { ...currentUser, ...fresh };
                 localStorage.setItem("user", JSON.stringify(currentUser));
             }
         } catch {
@@ -222,218 +214,6 @@ async function init() {
     applyStaticTranslations();
     updateUI();
     loadPosts();
-    if (token) {
-        startNotifPolling();
-    }
-    setupSearch();
-}
-
-// ── SEARCH ───────────────────────────────────────────────────────────────────
-function setupSearch() {
-    let searchTimer = null;
-    const handler = (e) => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => loadPosts(e.target.value.trim()), 350);
-    };
-    document.getElementById("searchInput")?.addEventListener("input", handler);
-    document.getElementById("searchInputMobile")?.addEventListener("input", handler);
-}
-
-function switchTab(tab) {
-    currentTab = tab;
-    document.getElementById("tabAll").classList.toggle("active", tab === "all");
-    document.getElementById("tabSaved").classList.toggle("active", tab === "saved");
-    loadPosts();
-}
-
-// ── RANK BADGE ────────────────────────────────────────────────────────────────
-function rankBadgeHTML(level, rank, tier) {
-    return `<span class="rank-badge rank-${tier}">${rank} · Lv.${level}</span>`;
-}
-
-// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
-function startNotifPolling() {
-    loadNotifs();
-    clearInterval(notifPollInterval);
-    notifPollInterval = setInterval(loadNotifs, 15000);
-}
-
-async function loadNotifs() {
-    if (!token) return;
-    const res = await fetch("/notifications", { headers: { "Authorization": token } });
-    if (!res.ok) return;
-    const notifs = await res.json();
-    const unread = notifs.filter(n => !n.read).length;
-    const badge  = document.getElementById("notifBadge");
-    if (badge) {
-        badge.textContent = unread > 9 ? "9+" : unread;
-        badge.classList.toggle("hidden", unread === 0);
-    }
-    renderNotifList(notifs);
-}
-
-const NOTIF_ICONS = { comment: "💬", reaction: "👍", friend_request: "👥", friend_accept: "🤝", mention: "@" };
-
-function renderNotifList(notifs) {
-    const list = document.getElementById("notifList");
-    if (!list) return;
-    if (!notifs.length) { list.innerHTML = `<div class="notif-empty">Nessuna notifica</div>`; return; }
-    list.innerHTML = notifs.map(n => `
-        <div class="notif-item ${n.read ? "" : "unread"}" data-id="${n._id}" onclick="handleNotifClick('${n._id}','${n.type}',${n.postId||0})">
-            <div class="notif-icon">${NOTIF_ICONS[n.type] || "🔔"}</div>
-            <div class="notif-body">
-                <div class="notif-msg">${escapeHtml(n.message)}</div>
-                <div class="notif-time">${formatRelTime(n.createdAt)}</div>
-            </div>
-            ${!n.read ? '<div class="notif-dot"></div>' : ''}
-        </div>`).join("");
-}
-
-async function handleNotifClick(id, type, postId) {
-    // Segna letta
-    const item = document.querySelector(`.notif-item[data-id="${id}"]`);
-    if (item) item.classList.remove("unread");
-    // Azioni contestuali
-    if ((type === "comment" || type === "reaction" || type === "mention") && postId) {
-        closeNotifPanel();
-        openPostDetail(postId);
-    }
-    await fetch(`/notifications/${id}`, { method: "DELETE", headers: { "Authorization": token } });
-    loadNotifs();
-}
-
-async function markAllNotifsRead() {
-    if (!token) return;
-    await fetch("/notifications/read", { method: "POST", headers: { "Authorization": token } });
-    loadNotifs();
-}
-
-function toggleNotifPanel() {
-    const panel = document.getElementById("notifPanel");
-    panel.classList.toggle("hidden");
-    if (!panel.classList.contains("hidden")) loadNotifs();
-}
-
-function closeNotifPanel() {
-    document.getElementById("notifPanel")?.classList.add("hidden");
-}
-
-// ── CLASS CHOICE ──────────────────────────────────────────────────────────────
-async function chooseClass(userClass) {
-    if (!token) return;
-    const res = await fetch("/user/class", {
-        method: "POST",
-        headers: { "Authorization": token, "Content-Type": "application/json" },
-        body: JSON.stringify({ userClass })
-    });
-    if (res.ok) {
-        currentUser.userClass = userClass;
-        currentUser.classChosen = true;
-        localStorage.setItem("user", JSON.stringify(currentUser));
-        closeModal("classChoiceModal");
-        updateUI(); // aggiorna topbar con il nuovo rank
-    }
-}
-
-// ── EDIT POST ─────────────────────────────────────────────────────────────────
-function openEditPost(postId, currentTitle) {
-    editPostId = postId;
-    document.getElementById("editPostTitle").value = currentTitle;
-    document.getElementById("editPostPanel").classList.remove("hidden");
-}
-
-function closeEditPost() {
-    document.getElementById("editPostPanel").classList.add("hidden");
-    editPostId = null;
-}
-
-async function submitEditPost() {
-    if (!editPostId) return;
-    const title = document.getElementById("editPostTitle").value.trim();
-    if (!title) return showAlert(t.insertTitle);
-    const res = await fetch(`/posts/${editPostId}`, {
-        method: "PUT",
-        headers: { "Authorization": token, "Content-Type": "application/json" },
-        body: JSON.stringify({ title })
-    });
-    if (res.ok) {
-        closeEditPost();
-        loadPosts();
-    }
-}
-
-// ── CAROUSEL ──────────────────────────────────────────────────────────────────
-function initCarousel(images) {
-    currentPostImages = images;
-    carouselIndex = 0;
-    renderCarousel();
-    const nav = document.getElementById("carouselNav");
-    if (nav) nav.classList.toggle("hidden", images.length <= 1);
-    document.getElementById("carouselPrev").onclick = () => { carouselIndex = (carouselIndex - 1 + currentPostImages.length) % currentPostImages.length; renderCarousel(); };
-    document.getElementById("carouselNext").onclick = () => { carouselIndex = (carouselIndex + 1) % currentPostImages.length; renderCarousel(); };
-}
-
-function renderCarousel() {
-    const img = document.getElementById("detailPostImage");
-    if (img) img.src = imgUrl(currentPostImages[carouselIndex] || "");
-    const counter = document.getElementById("carouselCounter");
-    if (counter) counter.textContent = `${carouselIndex + 1} / ${currentPostImages.length}`;
-}
-
-// ── SAVE POST ─────────────────────────────────────────────────────────────────
-async function toggleSavePost() {
-    if (!token) return showAlert("Accedi per salvare i post");
-    const res = await fetch(`/posts/${currentOpenPostId}/save`, {
-        method: "POST", headers: { "Authorization": token }
-    });
-    if (res.ok) {
-        const data = await res.json();
-        const btn = document.getElementById("savePostBtn");
-        if (btn) {
-            btn.textContent = data.saved ? "🔖 Salvato!" : "🔖 Salva Post";
-            btn.classList.toggle("saved", data.saved);
-        }
-        loadPosts(); // aggiorna badge nel feed
-    }
-}
-
-// ── LINK PREVIEW ──────────────────────────────────────────────────────────────
-async function fetchLinkPreview(url) {
-    if (linkPreviewCache[url]) return linkPreviewCache[url];
-    try {
-        const res = await fetch(`/link-preview?url=${encodeURIComponent(url)}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        linkPreviewCache[url] = data;
-        return data;
-    } catch { return null; }
-}
-
-function renderTextWithLinks(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const mentionRegex = /@(\w+)/g;
-    let html = escapeHtml(text);
-    html = html.replace(urlRegex, url => `<a href="${url}" target="_blank" style="color:var(--accent-text);">${url}</a>`);
-    html = html.replace(mentionRegex, (m, username) => `<span class="mention" onclick="openProfilePanel('${username}')">${m}</span>`);
-    return html;
-}
-
-async function maybeFetchLinkPreview(text, container) {
-    const urls = text.match(/(https?:\/\/[^\s]+)/g);
-    if (!urls) return;
-    const preview = await fetchLinkPreview(urls[0]);
-    if (!preview || !preview.title) return;
-    const div = document.createElement("div");
-    div.className = "link-preview";
-    div.onclick = () => window.open(preview.url, "_blank");
-    div.innerHTML = `
-        ${preview.image ? `<img class="link-preview-img" src="${preview.image}" onerror="this.style.display='none'">` : ""}
-        <div class="link-preview-body">
-            <div class="link-preview-domain">${escapeHtml(preview.domain)}</div>
-            <div class="link-preview-title">${escapeHtml(preview.title)}</div>
-            ${preview.description ? `<div class="link-preview-desc">${escapeHtml(preview.description)}</div>` : ""}
-        </div>`;
-    container.appendChild(div);
 }
 
 function applyStaticTranslations() {
@@ -502,16 +282,10 @@ function updateUI() {
     } else {
         const pfp = (currentUser && currentUser.profileImage) ? imgUrl(currentUser.profileImage) : DEFAULT_PFP;
         const currentLangObj = LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
-        const rankInfo = (currentUser.rank && currentUser.tier !== undefined)
-            ? rankBadgeHTML(currentUser.level||1, currentUser.rank, currentUser.tier)
-            : "";
         authArea.innerHTML = `
             <div class="user-profile-nav" onclick="toggleMenu('logoutMenu')">
                 <img src="${pfp}" onerror="this.src='${DEFAULT_PFP}'">
-                <div style="display:flex;flex-direction:column;gap:1px;">
-                    <span>${currentUser.username}</span>
-                    <span style="font-size:11px;">${rankInfo}</span>
-                </div>
+                <span>${currentUser.username}</span>
                 <div id="logoutMenu" class="logout-confirm hidden" onclick="event.stopPropagation()">
                     <button onclick="openEditProfile()" class="btn-main" style="margin-bottom:10px">${t.editProfile}</button>
                     <div class="lang-dropdown-container">
@@ -531,10 +305,6 @@ function updateUI() {
         loadMyPosts();
         loadFriendsData();
         startPolling();
-        // Mostra scelta classe se non ancora scelta
-        if (currentUser && !currentUser.classChosen) {
-            document.getElementById("classChoiceModal").classList.remove("hidden");
-        }
     }
 }
 
@@ -575,40 +345,17 @@ document.getElementById("authSubmit").onclick = async () => {
             localStorage.setItem("user", JSON.stringify(data));
             location.reload();
         } else {
-            // Dopo il register: esegui login automatico e mostra scelta classe
-            const loginRes = await fetch("/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: document.getElementById("authUsername").value, password: document.getElementById("authPassword").value })
-            });
-            if (loginRes.ok) {
-                const loginData = await loginRes.json();
-                localStorage.setItem("token", loginData.token);
-                localStorage.setItem("user", JSON.stringify(loginData));
-                token = loginData.token;
-                currentUser = loginData;
-                closeModal("authModal");
-                t = await translateAll(currentLang);
-                applyStaticTranslations();
-                updateUI();
-                loadPosts();
-                startNotifPolling();
-                // Mostra scelta classe
-                document.getElementById("classChoiceModal").classList.remove("hidden");
-            } else {
-                showAlert(t.regDone, "success");
-                isLoginMode = true;
-                updateAuthModal();
-            }
+            showAlert(t.regDone, "success");
+            isLoginMode = true;
+            updateAuthModal();
         }
     } else { showAlert(await res.text() || "Errore"); }
 };
 function openEditProfile() {
     document.getElementById("logoutMenu").classList.add("hidden");
     if (currentUser) {
-        document.getElementById("editUsernameInput").value = currentUser.username || "";
+        document.getElementById("editUsernameInput").value = currentUser.username;
         document.getElementById("editPfpPreview").src = imgUrl(currentUser.profileImage);
-        document.getElementById("editBioInput").value = currentUser.bio || "";
     }
     document.getElementById("editProfileModal").classList.remove("hidden");
 }
@@ -624,46 +371,25 @@ document.getElementById("submitEditProfile").onclick = async () => {
 // ── POSTS ─────────────────────────────────────────────────────────────────────
 document.getElementById("submitPost").onclick = async () => {
     const title = document.getElementById("postTitle").value;
-    const files = document.getElementById("postImageFile").files;
+    const file  = document.getElementById("postImageFile").files[0];
     const url   = document.getElementById("postImageUrl").value;
     if (!title) return showAlert(t.insertTitle);
     const fd = new FormData();
     fd.append("title", title);
-    if (files.length > 0) {
-        Array.from(files).forEach(f => fd.append("images", f));
-    } else if (url && !document.getElementById("postImageUrl").dataset.fileSelected) {
-        fd.append("imageUrl", url);
+    if (file) {
+        fd.append("image", file); // file reale → Cloudinary
+    } else {
+        fd.append("imageUrl", url); // URL esterno
     }
     const res = await fetch("/posts", { method: "POST", headers: { "Authorization": token }, body: fd });
-    if (res.ok) {
-        closeModal("createModal");
-        document.getElementById("postTitle").value = "";
-        document.getElementById("postImageUrl").value = "";
-        document.getElementById("postImageFile").value = "";
-        document.getElementById("imagePreviewGrid").classList.add("hidden");
-        document.getElementById("imagePreviewGrid").innerHTML = "";
-        loadPosts();
-        loadMyPosts();
-    }
+    if (res.ok) location.reload();
 };
 
 document.addEventListener('change', (e) => {
-    if (e.target.id === 'postImageFile' && e.target.files.length > 0) {
-        const files = Array.from(e.target.files);
-        document.getElementById("postImageUrl").value = files.length === 1 ? files[0].name : `${files.length} immagini`;
+    if (e.target.id === 'postImageFile' && e.target.files[0]) {
+        // Mostra il nome del file nel campo testo (solo visivo, non viene mandato come URL)
+        document.getElementById("postImageUrl").value = e.target.files[0].name;
         document.getElementById("postImageUrl").dataset.fileSelected = "true";
-        const grid = document.getElementById("imagePreviewGrid");
-        grid.innerHTML = "";
-        grid.classList.remove("hidden");
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = document.createElement("img");
-                img.src = ev.target.result;
-                grid.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-        });
     }
     if ((e.target.id === 'registerPfpFile' || e.target.id === 'editPfpFile') && e.target.files[0]) {
         const reader = new FileReader();
@@ -673,82 +399,35 @@ document.addEventListener('change', (e) => {
     }
 });
 
-async function loadPosts(search) {
-    const me = currentUser ? currentUser.username : "";
-    let url = `/posts?me=${encodeURIComponent(me)}`;
-    if (search) url += `&search=${encodeURIComponent(search)}`;
-    const res   = await fetch(url);
+async function loadPosts() {
+    const res   = await fetch("/posts");
     const posts = await res.json();
     const container = document.getElementById("posts");
     container.innerHTML = "";
-
-    let filtered = [...posts].reverse();
-    // Saved tab filter
-    if (currentTab === "saved") {
-        filtered = filtered.filter(p => p.savedByMe);
-    }
-    if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:40px;font-size:14px;">${currentTab === "saved" ? "🔖 Nessun post salvato" : "Nessun post trovato"}</div>`;
-        return;
-    }
-    for (const post of filtered) {
+    const allComments = await fetch("/posts").then(() => null).catch(() => null); // prefetch skip
+    for (const post of posts.reverse()) {
+        // Conta commenti (fetch leggera)
         let commentCount = 0;
         try {
-            const cr = await fetch(\`/posts/\${post.id}/comments\`);
+            const cr = await fetch(`/posts/${post.id}/comments`);
             const cs = await cr.json();
             commentCount = cs.length;
         } catch {}
 
         const div = document.createElement("div");
         div.className = "post";
-        const imgSrc = imgUrl(post.image || (post.images && post.images[0]) || "");
-        const isOwner = currentUser && post.author === currentUser.username;
-        const multiImg = post.images && post.images.length > 1;
+        const imgSrc = imgUrl(post.image);
         div.innerHTML = `
             <div class="post-header">
-                <h3>${escapeHtml(post.title)}</h3>
-                <small>${t.by} <span style="cursor:pointer;color:var(--accent-text)" onclick="openProfilePanel('${escapeHtml(post.author)}')">${escapeHtml(post.author)}</span></small>
-                ${isOwner ? `<button class="post-edit-btn" onclick="openEditPost(${post.id},'${escapeHtml(post.title).replace(/'/g,"\'")}')">✏️</button>` : ""}
+                <h3>${post.title}</h3>
+                <small>${t.by} ${post.author}</small>
             </div>
-            <div style="position:relative;">
-                <img src="${imgSrc}" onerror="this.src='${DEFAULT_PFP}'" data-post-id="${post.id}" style="cursor:pointer;">
-                ${multiImg ? `<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:white;font-size:11px;padding:2px 7px;border-radius:20px;">📷 ${post.images.length}</span>` : ""}
-            </div>
-            <div class="post-actions-row">
-                <button class="post-action-btn ${post.myPostReaction==='up'?'active-up':''}" data-pid="${post.id}" data-r="up">👍 <span>${post.postUps||0}</span></button>
-                <button class="post-action-btn ${post.myPostReaction==='down'?'active-down':''}" data-pid="${post.id}" data-r="down">👎 <span>${post.postDowns||0}</span></button>
-                <button class="post-action-btn ${post.savedByMe?'saved':''}" data-save="${post.id}">🔖 ${post.savedByMe?"Salvato":"Salva"}</button>
-                <div class="post-comment-count" data-post-id="${post.id}">💬 ${commentCount}</div>
+            <img src="${imgSrc}" onerror="this.src='${DEFAULT_PFP}'" data-post-id="${post.id}">
+            <div class="post-footer">
+                <div class="post-comment-count" data-post-id="${post.id}">💬 ${commentCount} ${t.comments}</div>
             </div>`;
-
         div.querySelector("img").onclick = () => openPostDetail(post);
         div.querySelector(".post-comment-count").onclick = () => openPostDetail(post);
-
-        // Post reactions
-        div.querySelectorAll(".post-action-btn[data-r]").forEach(btn => {
-            btn.onclick = async (e) => {
-                e.stopPropagation();
-                if (!token) return showAlert("Accedi per reagire");
-                const r = await fetch(\`/posts/\${btn.dataset.pid}/react\`, {
-                    method: "POST",
-                    headers: { "Authorization": token, "Content-Type": "application/json" },
-                    body: JSON.stringify({ reaction: btn.dataset.r })
-                });
-                if (r.ok) loadPosts(search);
-            };
-        });
-
-        // Save
-        const saveBtn = div.querySelector(".post-action-btn[data-save]");
-        if (saveBtn) saveBtn.onclick = async (e) => {
-            e.stopPropagation();
-            if (!token) return showAlert("Accedi per salvare i post");
-            const r = await fetch(\`/posts/\${saveBtn.dataset.save}/save\`, {
-                method: "POST", headers: { "Authorization": token }
-            });
-            if (r.ok) loadPosts(search);
-        };
-
         container.appendChild(div);
     }
 }
@@ -775,52 +454,22 @@ async function loadMyPosts() {
 
 // ── POST DETAIL & COMMENTI ────────────────────────────────────────────────────
 
-async function openPostDetail(postOrId) {
-    // Accetta sia oggetto post che solo id
-    let post = postOrId;
-    if (typeof postOrId === "number") {
-        try {
-            const r = await fetch("/posts?me=" + (currentUser ? currentUser.username : ""));
-            const all = await r.json();
-            post = all.find(p => p.id === postOrId);
-            if (!post) return;
-        } catch { return; }
-    }
+async function openPostDetail(post) {
     currentOpenPostId     = post.id;
     currentOpenPostAuthor = post.author;
+    const imgSrc = imgUrl(post.image);
 
     document.getElementById("detailPostTitle").textContent = post.title || "";
+    document.getElementById("detailPostImage").src = imgSrc;
     document.getElementById("detailAuthorName").innerText = post.author || "";
     document.getElementById("detailPostDate").innerText = post.id ? formatDate(post.id) : "";
 
-    // Carosello immagini
-    const images = (post.images && post.images.length > 0) ? post.images : (post.image ? [post.image] : []);
-    initCarousel(images);
-
-    // Save button stato
-    const saveBtn = document.getElementById("savePostBtn");
-    if (saveBtn) {
-        saveBtn.textContent = post.savedByMe ? "🔖 Salvato!" : "🔖 Salva Post";
-        saveBtn.classList.toggle("saved", !!post.savedByMe);
-    }
-
-    // Post reactions row
-    const reactRow = document.getElementById("postReactionsRow");
-    if (reactRow) {
-        reactRow.innerHTML = `
-            <button class="post-action-btn ${post.myPostReaction==='up'?'active-up':''}" id="detailReactUp">👍 <span id="detailUps">${post.postUps||0}</span></button>
-            <button class="post-action-btn ${post.myPostReaction==='down'?'active-down':''}" id="detailReactDown">👎 <span id="detailDowns">${post.postDowns||0}</span></button>`;
-        reactRow.querySelector("#detailReactUp").onclick = () => reactToOpenPost("up");
-        reactRow.querySelector("#detailReactDown").onclick = () => reactToOpenPost("down");
-    }
-
+    // Avatar autore — endpoint pubblico, funziona anche senza login e anche sul proprio profilo
     try {
         const ur = await fetch(`/users/profile/${encodeURIComponent(post.author)}`);
         if (ur.ok) {
             const u = await ur.json();
             document.getElementById("detailAuthorAvatar").src = imgUrl(u.profileImage);
-            const rankEl = document.getElementById("detailAuthorRank");
-            if (rankEl && u.rank !== undefined) rankEl.innerHTML = rankBadgeHTML(u.level, u.rank, u.tier);
         } else { document.getElementById("detailAuthorAvatar").src = DEFAULT_PFP; }
     } catch { document.getElementById("detailAuthorAvatar").src = DEFAULT_PFP; }
 
@@ -913,7 +562,7 @@ function appendComment(c, doScroll = true) {
                 ${c.author === currentOpenPostAuthor ? `<span class="badge badge-op">${t.badgeOp}</span>` : ""}
                 ${currentUser && c.author !== currentUser.username && myFriends.has(c.author) ? `<span class="badge badge-friend">${t.badgeFriend}</span>` : ""}
             </div>
-            <div class="comment-text">${renderTextWithLinks(c.text || "")}</div>
+            <div class="comment-text">${escapeHtml(c.text || "")}</div>
             <div class="comment-time">${formatRelTime(c.createdAt)}</div>
             <div class="comment-reactions">
                 <button class="reaction-btn reaction-up ${myReaction === 'up' ? 'active-up' : ''}" data-reaction="up">
@@ -924,9 +573,6 @@ function appendComment(c, doScroll = true) {
                 </button>
             </div>
         </div>`;
-
-    // Async link preview
-    maybeFetchLinkPreview(c.text || "", div.querySelector(".comment-body"));
 
     if (canDelete) {
         div.querySelector(".comment-delete-btn").onclick = async () => {
@@ -1158,11 +804,6 @@ function hideFriendPopover() {
 }
 
 document.addEventListener("click", (e) => {
-    const notifPanel = document.getElementById("notifPanel");
-    const notifBtn   = document.getElementById("notifBtn");
-    if (notifPanel && !notifPanel.classList.contains("hidden") && !notifPanel.contains(e.target) && !notifBtn.contains(e.target)) {
-        notifPanel.classList.add("hidden");
-    }
     if (!document.getElementById("friendPopover").contains(e.target))
         hideFriendPopover();
 });
@@ -1200,30 +841,11 @@ async function openUserProfile(username) {
     if (!res.ok) return;
     const data = await res.json();
 
-    document.getElementById("profilePanelAvatar").src = imgUrl(data.profileImage);
+    document.getElementById("profilePanelAvatar").src =
+        imgUrl(data.profileImage);
     document.getElementById("profilePanelUsername").innerText = data.username;
-
-    const rankEl = document.getElementById("profilePanelRank");
-    if (rankEl && data.rank !== undefined) rankEl.innerHTML = rankBadgeHTML(data.level||1, data.rank, data.tier||0);
-
-    const bioEl = document.getElementById("profilePanelBio");
-    if (bioEl) bioEl.textContent = data.bio || "";
-
-    const statsEl = document.getElementById("profilePanelStats");
-    if (statsEl) {
-        const nextTierLevels = [20, 40, 80, 130];
-        const lvl  = data.level || 1;
-        const next = nextTierLevels.find(n => n > lvl) || 999;
-        const prev = [...nextTierLevels].reverse().find(n => n <= lvl) || 1;
-        const pct  = next === 999 ? 100 : Math.round(((lvl - prev) / (next - prev)) * 100);
-        statsEl.innerHTML = `
-            <span class="stat-badge ups">👍 ${data.totalUps||0}</span>
-            <span class="stat-badge downs">👎 ${data.totalDowns||0}</span>
-            <div class="level-bar-wrap">
-                <div class="level-bar-label"><span>Lv. ${lvl}</span><span>${next===999?"MAX":"→ Lv."+next}</span></div>
-                <div class="level-bar-track"><div class="level-bar-fill" style="width:${pct}%"></div></div>
-            </div>`;
-    }
+    document.getElementById("profileTotalUps").innerText      = data.totalUps   || 0;
+    document.getElementById("profileTotalDowns").innerText    = data.totalDowns || 0;
 
     // Griglia post
     const grid = document.getElementById("profilePanelPosts");
@@ -1320,23 +942,6 @@ function closeMobileSidebars() {
         if (dx > 0 && mobileActive === 'feed')  toggleMobileSidebar('left');
     }, { passive: true });
 })();
-
-// ── POST REACTIONS FROM DETAIL PANEL ─────────────────────────────────────────
-async function reactToOpenPost(reaction) {
-    if (!token) return showAlert("Accedi per reagire");
-    const res = await fetch(`/posts/${currentOpenPostId}/react`, {
-        method: "POST",
-        headers: { "Authorization": token, "Content-Type": "application/json" },
-        body: JSON.stringify({ reaction })
-    });
-    if (res.ok) {
-        const data = await res.json();
-        const upBtn   = document.getElementById("detailReactUp");
-        const downBtn = document.getElementById("detailReactDown");
-        if (upBtn)   { upBtn.querySelector("span").textContent = data.postUps; upBtn.classList.toggle("active-up", data.myPostReaction==="up"); upBtn.classList.remove("active-down"); }
-        if (downBtn) { downBtn.querySelector("span").textContent = data.postDowns; downBtn.classList.toggle("active-down", data.myPostReaction==="down"); downBtn.classList.remove("active-up"); }
-    }
-}
 
 // ── FEEDBACK ─────────────────────────────────────────────────────────────────
 
