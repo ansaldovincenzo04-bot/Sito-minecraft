@@ -1,4 +1,6 @@
 node_modules/
 data/
 uploads/
+.envnode_modules/
 .env
+.DS_Store
