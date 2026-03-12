@@ -1,137 +1,39 @@
-// ── STRINGHE BASE (Italiano) ──────────────────────────────────────────────────
-const BASE_STRINGS = {
-    // Sidebar sinistra
-    profile:    "Profilo",
-    yourImgs:   "Le tue immagini:",
-    create:     "Crea Post",
-    delete:     "Modalità Elimina",
-    confirm:    "Conferma Elimina",
-    // Menu utente
-    logout:     "Esci",
-    editProfile:"Modifica Profilo",
-    editTitle:  "Modifica Profilo",
-    langLabel:  "Lingue",
-    // Auth
-    login:      "Entra",
-    register:   "Registrati",
-    switchReg:  "Non hai un account? Registrati",
-    switchLog:  "Hai un account? Accedi",
-    logoutTitle:"Sei sicuro?",
-    yesLogout:  "Sì, Esci",
-    regDone:    "Registrazione completata! Ora accedi.",
-    // Amici sidebar
-    friends:    "Amici",
-    searchPlaceholder: "Cerca username...",
-    searchBtn:  "Cerca",
-    noFriends:  "Nessun amico ancora",
-    reqSent:    "Richiesta inviata",
-    reqWaiting: "In attesa di risposta",
-    reqWants:   "Vuole essere tuo amico",
-    accept:     "Accetta",
-    reject:     "Rifiuta",
-    // Popover amico
-    viewProfile:      "👤 Vedi Profilo",
-    removeFriend:     "💔 Rimuovi Amico",
-    removeFriendTitle:"Rimuovi Amico",
-    removeFriendDesc: "Sei sicuro di voler rimuovere",
-    removeFriendDesc2:"dagli amici?",
-    confirmRemoveYes: "Sì, Rimuovi",
-    // Pannello profilo utente
-    postsPublished:   "Post pubblicati",
-    noPosts:          "Nessun post ancora.",
-    // Post feed
-    by:               "Di",
-    // Creazione post
-    newPost:    "Nuovo Post",
-    titlePlaceholder: "Titolo...",
-    urlPlaceholder:   "URL o Nome File...",
-    publish:    "Pubblica",
-    cancel:     "Annulla",
-    saveProfile:"Salva Modifiche",
-    newUsername:"Nuovo Username",
-    insertTitle:"Inserisci un titolo",
-    // Alert
-    warning:    "Attenzione",
-    ok:         "OK",
-    // Errori amici
-    alreadyFriend:    "è già tuo amico!",
-    alreadySent:      "Hai già inviato una richiesta a",
-    alreadyReceived:  "ti ha già inviato una richiesta!",
-    // Commenti
-    comments:         "Commenti",
-    noComments:       "Nessun commento ancora. Sii il primo!",
-    commentPlaceholder: "Scrivi un commento...",
-    commentPublish:   "Pubblica",
-    commentLoginMsg:  "Accedi per commentare",
-    sortRecent:       "Recenti",
-    sortPopular:      "Popolari",
-    badgeOp:          "OP",
-    badgeFriend:      "👥 Amico",
-    // Tempo relativo
-    justNow:          "Adesso",
-    minutesAgo:       "min fa",
-    hoursAgo:         "ore fa",
-    // Tema
-    themeToggleDark:  "☀️ Passa al Tema Chiaro",
-    themeToggleLight: "🌙 Passa al Tema Scuro",
-    // Feedback
-    feedbackSent:     "Grazie per il tuo feedback!",
-    feedbackEmpty:    "Scrivi qualcosa prima di inviare.",
-    // Mobile nav
-    mobileProfile:    "Profilo",
-    mobileFeed:       "Home",
-    mobileFriends:    "Amici",
-    // Feed tabs
-    tabAll:           "🏠 Feed",
-    tabSaved:         "🔖 Salvati",
-    tabFriends:       "👥 Amici",
-    tabLeaderboard:   "🏆 Classifica",
-    // Leaderboard
-    leaderboardTitle: "🏆 Classifica Settimanale",
-    leaderboardSub:   "Top 10 utenti per like ricevuti questa settimana",
-    leaderboardEmpty: "Nessun dato disponibile ancora.",
-    // Achievements
-    achievementsLabel:"🏆 Achievement",
-    achievementLocked:"Bloccato",
-    // Clan
-    clanTitle:        "🏰 Il tuo Clan",
-    clanNone:         "Non sei in nessun clan.",
-    clanCreate:       "Crea Clan",
-    clanJoin:         "Unisciti a un Clan",
-    clanLeave:        "Lascia il Clan",
-    clanMembers:      "Membri",
-    clanSearch:       "Cerca clan...",
-    clanNameLabel:    "Nome clan",
-    clanTagLabel:     "Tag (2-5 caratteri)",
-    clanDescLabel:    "Descrizione (opzionale)",
-    clanCreateBtn:    "Crea",
-    clanJoinBtn:      "Unisciti",
-    clanLeader:       "👑 Leader",
-};
-
-const LANGUAGES = [
-    { code: "it", label: "Italiano",   flag: "🇮🇹" },
-    { code: "en", label: "English",    flag: "🇬🇧" },
-    { code: "es", label: "Español",    flag: "🇪🇸" },
-    { code: "fr", label: "Français",   flag: "🇫🇷" },
-    { code: "de", label: "Deutsch",    flag: "🇩🇪" },
-    { code: "pt", label: "Português",  flag: "🇵🇹" },
-    { code: "ru", label: "Русский",    flag: "🇷🇺" },
-    { code: "zh", label: "中文",        flag: "🇨🇳" },
-    { code: "ja", label: "日本語",      flag: "🇯🇵" },
-    { code: "ar", label: "العربية",    flag: "🇸🇦" },
-    { code: "hi", label: "हिन्दी",     flag: "🇮🇳" },
-    { code: "ko", label: "한국어",      flag: "🇰🇷" },
-    { code: "tr", label: "Türkçe",     flag: "🇹🇷" },
-    { code: "pl", label: "Polski",     flag: "🇵🇱" },
-    { code: "nl", label: "Nederlands", flag: "🇳🇱" },
-];
+// Strings loaded from strings.js
 
 // ── TRADUTTORE ────────────────────────────────────────────────────────────────
 let t = { ...BASE_STRINGS };
 
-// Versione cache — incrementa ogni volta che aggiungi stringhe a BASE_STRINGS
-const STRINGS_VERSION = "v5";
+// Impostazioni traduzione
+function getTranslateSettings() {
+    return {
+        ui:      localStorage.getItem("translateUI")      !== "false", // default true
+        content: localStorage.getItem("translateContent") === "true",  // default false
+    };
+}
+function saveTranslateSettings() {
+    localStorage.setItem("translateUI",      document.getElementById("toggleTranslateUI").checked);
+    localStorage.setItem("translateContent", document.getElementById("toggleTranslateContent").checked);
+}
+function initTranslateSettingsModal() {
+    const s = getTranslateSettings();
+    const ui = document.getElementById("toggleTranslateUI");
+    const co = document.getElementById("toggleTranslateContent");
+    if (ui) ui.checked = s.ui;
+    if (co) co.checked = s.content;
+}
+
+// Traduzione singolo testo (per contenuti player)
+async function translateText(text, targetLang) {
+    if (!targetLang || targetLang === "it") return text;
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        return data[0].map(chunk => chunk[0]).join("");
+    } catch { return text; }
+}
+
+// Versione cache — incrementa ogni volta che aggiungi stringhe a strings.js
 
 async function translateAll(langCode) {
     if (langCode === "it") return { ...BASE_STRINGS };
@@ -204,6 +106,7 @@ let carouselIndex      = 0;        // indice corrente carosello
 let notifPollInterval  = null;
 let editPostId         = null;
 let linkPreviewCache   = {};       // cache URL → preview data
+let commentClanTags    = {};       // cache username → clanTag
 
 // Gestisce sia URL Cloudinary (https://...) che vecchi path locali (/uploads/...)
 function imgUrl(src) {
@@ -244,8 +147,12 @@ async function init() {
             // Server non raggiungibile — manteniamo lo stato locale
         }
     }
-    t = await translateAll(currentLang);
-    applyStaticTranslations();
+    initTranslateSettingsModal();
+    const settings = getTranslateSettings();
+    if (settings.ui) {
+        t = await translateAll(currentLang);
+        applyStaticTranslations();
+    }
     updateUI();
     loadPosts();
     if (token) {
@@ -538,11 +445,12 @@ function updateUI() {
         const rankInfo = (currentUser.rank && currentUser.tier !== undefined)
             ? rankBadgeHTML(currentUser.level||1, currentUser.rank, currentUser.tier)
             : "";
+        const clanTagDisplay = currentUser.clanTag ? `<span class="user-clan-tag">[${escapeHtml(currentUser.clanTag)}]</span>` : "";
         authArea.innerHTML = `
             <div class="user-profile-nav" onclick="toggleMenu('logoutMenu')">
                 <img src="${pfp}" onerror="this.src='${DEFAULT_PFP}'">
                 <div style="display:flex;flex-direction:column;gap:1px;">
-                    <span>${currentUser.username}</span>
+                    <span>${clanTagDisplay}${currentUser.username}</span>
                     <span style="font-size:11px;">${rankInfo}</span>
                 </div>
                 <div id="logoutMenu" class="logout-confirm hidden" onclick="event.stopPropagation()">
@@ -759,6 +667,30 @@ async function loadPosts(search) {
         div.querySelector("img").onclick = () => openPostDetail(post);
         div.querySelector(".post-comment-count").onclick = () => openPostDetail(post);
 
+        // Translate button for post title
+        if (getTranslateSettings().content && currentLang !== "it") {
+            const tBtn = document.createElement("button");
+            tBtn.className = "translate-btn";
+            tBtn.textContent = t.translateBtn || "Traduci";
+            let translated = false;
+            const originalTitle = post.title;
+            tBtn.onclick = async (e) => {
+                e.stopPropagation();
+                const h3 = div.querySelector("h3");
+                if (!translated) {
+                    tBtn.textContent = t.translating || "...";
+                    h3.textContent = await translateText(originalTitle, currentLang);
+                    tBtn.textContent = t.showOriginal || "Originale";
+                    translated = true;
+                } else {
+                    h3.textContent = originalTitle;
+                    tBtn.textContent = t.translateBtn || "Traduci";
+                    translated = false;
+                }
+            };
+            div.querySelector(".post-header").appendChild(tBtn);
+        }
+
         // Post reactions
         div.querySelectorAll(".post-action-btn[data-r]").forEach(btn => {
             btn.onclick = async (e) => {
@@ -939,11 +871,23 @@ function appendComment(c, doScroll = true) {
     const div = document.createElement("div");
     div.className = "comment-item";
     div.dataset.commentId = c.id;
+    // Get clan tag for comment author
+    const commentClanTag = commentClanTags[c.author] || "";
+    if (!commentClanTags[c.author]) {
+        fetch(`/users/profile/${encodeURIComponent(c.author)}`).then(r=>r.ok?r.json():null).then(u=>{
+            if (u && u.clanTag) {
+                commentClanTags[c.author] = u.clanTag;
+                const tagEl = div.querySelector(".comment-clan-tag");
+                if (tagEl) tagEl.textContent = `[${u.clanTag}]`;
+            }
+        });
+    }
     div.innerHTML = `
         <img class="comment-avatar" src="${pfp}" onerror="this.src='${DEFAULT_PFP}'">
         <div class="comment-body">
             ${canDelete ? `<button class="comment-delete-btn" title="Elimina">✕</button>` : ""}
             <div class="comment-username-row">
+                <span class="comment-clan-tag" style="font-size:10px;color:var(--accent);font-weight:700;margin-right:3px;">${commentClanTag ? `[${commentClanTag}]` : ""}</span>
                 <span class="comment-username">${c.author || "Utente"}</span>
                 ${c.author === currentOpenPostAuthor ? `<span class="badge badge-op">${t.badgeOp}</span>` : ""}
                 ${currentUser && c.author !== currentUser.username && myFriends.has(c.author) ? `<span class="badge badge-friend">${t.badgeFriend}</span>` : ""}
@@ -1129,6 +1073,7 @@ document.getElementById("friendSearchInput").addEventListener("keydown", (e) => 
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function toggleMenu(id) { document.getElementById(id).classList.toggle("hidden"); }
+function openModal(id)  { document.getElementById(id).classList.remove("hidden"); }
 function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
 function setLang(l)     { localStorage.setItem("lang", l); location.reload(); }
 function openLogoutConfirm() { document.getElementById("logoutMenu").classList.add("hidden"); document.getElementById("logoutConfirmModal").classList.remove("hidden"); }
@@ -1262,9 +1207,9 @@ async function openUserProfile(username) {
             </div>`;
     }
 
-    // Achievements
+    // Achievements & Clan badge
     loadAchievements(username);
-    loadClanBadge(username);
+    loadClanBadge(username, data.clanTag, data.clanName);
 
     // Griglia post
     const grid = document.getElementById("profilePanelPosts");
@@ -1442,6 +1387,7 @@ async function openClanPanel() {
 
 function closeClanPanel() {
     document.getElementById("clanPanel").classList.add("hidden");
+    if (clanChatPolling) { clearInterval(clanChatPolling); clanChatPolling = null; }
 }
 
 async function refreshClanPanel() {
@@ -1461,25 +1407,50 @@ async function refreshClanPanel() {
     }
 }
 
+let clanChatPolling = null;
+
 function renderMyClan(clan) {
     const isLeader = clan.leader === (currentUser && currentUser.username);
-    const content = document.getElementById("clanPanelContent");
+    const content  = document.getElementById("clanPanelContent");
+    const clanImg  = clan.image
+        ? `<img src="${clan.image}" class="clan-image-big">`
+        : `<div class="clan-tag-big">[${escapeHtml(clan.tag)}]</div>`;
+
     content.innerHTML = `
         <div class="clan-header">
-            <div class="clan-tag-big">[${escapeHtml(clan.tag)}]</div>
-            <div>
+            ${clanImg}
+            <div style="flex:1">
                 <h2 class="clan-name-big">${escapeHtml(clan.name)}</h2>
                 <p class="clan-desc">${escapeHtml(clan.description || "")}</p>
+                ${isLeader ? `<button class="btn-secondary" style="font-size:12px;padding:4px 12px;margin-top:8px" onclick="showEditClanForm()">✏️ ${t.clanEdit}</button>` : ""}
             </div>
         </div>
-        <div class="clan-members-section">
-            <div class="clan-section-title">${t.clanMembers} (${clan.members.length})</div>
-            <div id="clanMembersList" class="clan-members-list"></div>
+        <div class="clan-tabs-row">
+            <button class="clan-tab-btn active" id="clanTabMembers" onclick="showClanTab('members')">👥 ${t.clanMembers}</button>
+            <button class="clan-tab-btn" id="clanTabChat" onclick="showClanTab('chat')">💬 ${t.clanChat}</button>
         </div>
-        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger)" onclick="leaveClan()">${t.clanLeave}</button>
+        <div id="clanTabContent"></div>
+        <div style="margin-top:16px">
+            <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger);font-size:12px" onclick="leaveClan()">${t.clanLeave}</button>
         </div>`;
 
+    showClanMembersTab(clan, isLeader);
+}
+
+function showClanTab(tab) {
+    document.getElementById("clanTabMembers").classList.toggle("active", tab === "members");
+    document.getElementById("clanTabChat").classList.toggle("active", tab === "chat");
+    if (tab === "members") {
+        if (clanChatPolling) { clearInterval(clanChatPolling); clanChatPolling = null; }
+        showClanMembersTab(myClan, myClan && myClan.leader === (currentUser && currentUser.username));
+    } else {
+        openClanChat();
+    }
+}
+
+function showClanMembersTab(clan, isLeader) {
+    const container = document.getElementById("clanTabContent");
+    container.innerHTML = `<div class="clan-members-list" id="clanMembersList"></div>`;
     const membersList = document.getElementById("clanMembersList");
     clan.members.forEach(username => {
         const div = document.createElement("div");
@@ -1494,6 +1465,98 @@ function renderMyClan(clan) {
         });
         membersList.appendChild(div);
     });
+}
+
+async function openClanChat() {
+    const container = document.getElementById("clanTabContent");
+    container.innerHTML = `
+        <div class="clan-chat-wrap">
+            <div class="clan-chat-messages" id="clanChatMessages"><div style="text-align:center;color:var(--text-muted);padding:20px">⏳</div></div>
+            <div class="clan-chat-input-row">
+                <input type="text" id="clanChatInput" class="clan-chat-input" placeholder="${t.clanChatPlaceholder}" maxlength="500">
+                <button class="clan-chat-send" onclick="sendClanMessage()">➤</button>
+            </div>
+        </div>`;
+    document.getElementById("clanChatInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") sendClanMessage();
+    });
+    await loadClanMessages();
+    if (clanChatPolling) clearInterval(clanChatPolling);
+    clanChatPolling = setInterval(loadClanMessages, 4000);
+}
+
+async function loadClanMessages() {
+    if (!myClan || !token) return;
+    const res = await fetch(`/clan/${encodeURIComponent(myClan.name)}/messages`, { headers: { "Authorization": token } });
+    if (!res.ok) return;
+    const msgs = await res.json();
+    const container = document.getElementById("clanChatMessages");
+    if (!container) { clearInterval(clanChatPolling); clanChatPolling = null; return; }
+    if (!msgs.length) { container.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:20px">${t.clanNoMessages}</div>`; return; }
+    const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 30;
+    container.innerHTML = msgs.map(m => {
+        const isMe = currentUser && m.author === currentUser.username;
+        return `<div class="clan-msg ${isMe?"clan-msg-me":"clan-msg-other"}">
+            ${!isMe ? `<span class="clan-msg-author" onclick="openProfilePanel('${escapeHtml(m.author)}')">${escapeHtml(m.author)}</span>` : ""}
+            <div class="clan-msg-bubble">${escapeHtml(m.text)}</div>
+            <div class="clan-msg-time">${formatRelTime(m.createdAt)}</div>
+        </div>`;
+    }).join("");
+    if (wasAtBottom) container.scrollTop = container.scrollHeight;
+}
+
+async function sendClanMessage() {
+    const input = document.getElementById("clanChatInput");
+    const text = input?.value?.trim();
+    if (!text || !myClan || !token) return;
+    input.value = "";
+    const res = await fetch(`/clan/${encodeURIComponent(myClan.name)}/messages`, {
+        method: "POST",
+        headers: { "Authorization": token, "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+    });
+    if (res.ok) loadClanMessages();
+    else showAlert(await res.text());
+}
+
+function showEditClanForm() {
+    if (!myClan) return;
+    const content = document.getElementById("clanPanelContent");
+    content.innerHTML = `
+        <button class="btn-secondary" style="margin-bottom:16px" onclick="refreshClanPanel()">← Indietro</button>
+        <h2 style="font-family:'Rajdhani',sans-serif;font-size:20px;color:var(--accent-text);margin-bottom:16px;">✏️ ${t.clanEdit}</h2>
+        <input type="text" id="editClanName" class="custom-input" placeholder="${t.clanNameLabel}..." value="${escapeHtml(myClan.name)}">
+        <textarea id="editClanDesc" class="custom-input" style="resize:vertical;min-height:60px" placeholder="${t.clanDescLabel}...">${escapeHtml(myClan.description||"")}</textarea>
+        <div style="margin-bottom:12px">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">Immagine clan (sostituisce il tag)</label>
+            ${myClan.image ? `<img src="${myClan.image}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;margin-bottom:8px;display:block">` : ""}
+            <label for="editClanImageFile" class="btn-secondary" style="cursor:pointer;font-size:12px;display:inline-block">📁 Carica Immagine</label>
+            <input type="file" id="editClanImageFile" accept="image/*" style="display:none">
+        </div>
+        <button class="btn-main" onclick="submitEditClan()">Salva Modifiche</button>`;
+}
+
+async function submitEditClan() {
+    if (!myClan || !token) return;
+    const fd = new FormData();
+    fd.append("newName",     document.getElementById("editClanName").value.trim());
+    fd.append("description", document.getElementById("editClanDesc").value.trim());
+    const file = document.getElementById("editClanImageFile").files[0];
+    if (file) fd.append("image", file);
+    const res = await fetch(`/clan/${encodeURIComponent(myClan.name)}`, {
+        method: "PUT",
+        headers: { "Authorization": token },
+        body: fd
+    });
+    if (res.ok) {
+        myClan = await res.json();
+        // Refresh clan tag in currentUser
+        currentUser.clanTag = myClan.tag;
+        currentUser.clanName = myClan.name;
+        localStorage.setItem("user", JSON.stringify(currentUser));
+        updateUI();
+        await refreshClanPanel();
+    } else { showAlert(await res.text()); }
 }
 
 function renderClanBrowser() {
@@ -1534,7 +1597,12 @@ function showCreateClanForm() {
         <button class="btn-secondary" style="margin-bottom:16px" onclick="refreshClanPanel()">← Indietro</button>
         <h2 style="font-family:'Rajdhani',sans-serif;font-size:22px;color:var(--accent-text);margin-bottom:20px;">👑 ${t.clanCreate}</h2>
         <input type="text" id="clanNameInput" class="custom-input" placeholder="${t.clanNameLabel}..." maxlength="30">
-        <input type="text" id="clanTagInput" class="custom-input" placeholder="${t.clanTagLabel}..." maxlength="5" style="text-transform:uppercase">
+        <div class="clan-tag-input-wrap">
+            <input type="text" id="clanTagInput" class="custom-input" placeholder="${t.clanTagLabel}..." maxlength="5" style="text-transform:uppercase;margin-bottom:0">
+            <div class="clan-tag-tooltip-icon" tabindex="0">ℹ️
+                <div class="clan-tag-tooltip-box">${t.clanTagTooltip}</div>
+            </div>
+        </div>
         <textarea id="clanDescInput" class="custom-input" placeholder="${t.clanDescLabel}..." style="resize:vertical;min-height:60px;max-length:200"></textarea>
         <button class="btn-main" onclick="createClan()">${t.clanCreateBtn}</button>`;
 }
@@ -1584,29 +1652,81 @@ async function kickFromClan(username) {
 
 // ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
 
+let achievementsPanelUser = null;
+let achFilter = "all";
+
+async function openAchievementsPanelFor(username) {
+    if (!username) return;
+    achievementsPanelUser = username;
+    document.getElementById("achievementsPanel").classList.remove("hidden");
+    await renderAchievementsPanel();
+}
+
+function closeAchievementsPanel() {
+    document.getElementById("achievementsPanel").classList.add("hidden");
+}
+
+async function renderAchievementsPanel() {
+    const res = await fetch(`/users/${encodeURIComponent(achievementsPanelUser)}/achievements`);
+    if (!res.ok) return;
+    const all = await res.json();
+    const unlocked = all.filter(a => a.unlocked);
+    const locked   = all.filter(a => !a.unlocked);
+
+    document.getElementById("achievementsSubtitle").textContent =
+        `${unlocked.length} / ${all.length} sbloccati`;
+
+    // Filter row
+    const cats = ["all", "post", "like", "social", "rank", "clan", "special"];
+    const catLabels = { all:"Tutti", post:"📝 Post", like:"👍 Like", social:"👥 Social", rank:"🎖️ Rank", clan:"🏰 Clan", special:"✨ Speciali" };
+    document.getElementById("achFilterRow").innerHTML = cats.map(c =>
+        `<button class="ach-filter-btn ${c===achFilter?"active":""}" onclick="setAchFilter('${c}')">${catLabels[c]}</button>`
+    ).join("");
+
+    let filtered = all;
+    if (achFilter !== "all") filtered = all.filter(a => a.category === achFilter);
+
+    document.getElementById("achievementsPanelGrid").innerHTML = filtered.map(a => `
+        <div class="achievement-panel-item ${a.unlocked?"unlocked":"locked"}">
+            <div class="ach-icon-big">${a.unlocked ? a.icon : "🔒"}</div>
+            <div class="ach-info">
+                <div class="ach-name">${escapeHtml(a.name)}</div>
+                <div class="ach-desc">${escapeHtml(a.desc)}</div>
+                ${a.unlocked && a.unlockedAt ? `<div class="ach-date">Sbloccato il ${new Date(a.unlockedAt).toLocaleDateString("it")}</div>` : ""}
+            </div>
+            ${a.unlocked ? '<div class="ach-check">✓</div>' : ""}
+        </div>`).join("");
+}
+
+function setAchFilter(f) {
+    achFilter = f;
+    renderAchievementsPanel();
+}
+
 async function loadAchievements(username) {
     const res = await fetch(`/users/${encodeURIComponent(username)}/achievements`);
     if (!res.ok) return;
     const achievements = await res.json();
     const grid = document.getElementById("profilePanelAchievements");
     if (!grid) return;
-    grid.innerHTML = achievements.map(a => `
-        <div class="achievement-badge ${a.unlocked ? "unlocked" : "locked"}" title="${escapeHtml(a.name)}: ${escapeHtml(a.desc)}">
-            <div class="achievement-icon">${a.unlocked ? a.icon : "🔒"}</div>
+    const unlocked = achievements.filter(a => a.unlocked).slice(0, 6);
+    grid.innerHTML = unlocked.map(a => `
+        <div class="achievement-badge unlocked" title="${escapeHtml(a.name)}: ${escapeHtml(a.desc)}">
+            <div class="achievement-icon">${a.icon}</div>
             <div class="achievement-name">${escapeHtml(a.name)}</div>
-        </div>`).join("");
+        </div>`).join("") +
+        `<div class="achievement-badge" style="cursor:pointer" onclick="openAchievementsPanelFor('${escapeHtml(username)}')" title="Vedi tutti">
+            <div class="achievement-icon">➕</div>
+            <div class="achievement-name">Tutti</div>
+        </div>`;
 }
 
-async function loadClanBadge(username) {
-    const res = await fetch(`/clan/search?q=`);
-    if (!res.ok) return;
-    const clans = await res.json();
-    const clan = clans.find(c => c.members.includes(username));
+async function loadClanBadge(username, clanTag, clanName) {
     const el = document.getElementById("profilePanelClan");
     if (!el) return;
-    if (clan) {
-        el.style.display = "block";
-        el.innerHTML = `<span class="clan-tag-profile">[${escapeHtml(clan.tag)}]</span> <span class="clan-name-profile">${escapeHtml(clan.name)}</span>`;
+    if (clanTag) {
+        el.style.display = "flex";
+        el.innerHTML = `<span class="clan-tag-profile">[${escapeHtml(clanTag)}]</span> <span class="clan-name-profile">${escapeHtml(clanName||"")}</span>`;
     } else {
         el.style.display = "none";
     }
