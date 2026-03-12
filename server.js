@@ -615,359 +615,167 @@ app.delete("/admin/posts/:id", adminAuth, async (req, res) => {
 });
 
 app.get("/admin", (req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+
+  const CSS = `*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,sans-serif;background:#090b11;color:#e8eaf0;min-height:100vh}:root{--a:#f09a00;--s:#10131c;--b:rgba(255,255,255,.07);--d:#ef4444}.lw{display:flex;align-items:center;justify-content:center;min-height:100vh}.lc{background:var(--s);border:1px solid var(--b);border-radius:16px;padding:40px;width:340px;text-align:center}.li{font-size:48px;margin-bottom:16px}.lt{font-family:Rajdhani,sans-serif;font-size:26px;font-weight:700;color:var(--a);margin-bottom:6px}.ls{color:#6b7280;font-size:13px;margin-bottom:24px}.inp{width:100%;background:#0d1017;border:1px solid var(--b);border-radius:10px;padding:11px 15px;color:#e8eaf0;font-size:14px;outline:none;margin-bottom:12px}.inp:focus{border-color:var(--a)}.btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:var(--a);color:#000}.btn:hover{opacity:.9}.err{color:#f87171;font-size:13px;margin-top:8px;min-height:20px}.tb{background:var(--s);border-bottom:1px solid var(--b);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}.logo{font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:var(--a)}.xb{background:none;border:1px solid var(--b);color:#9ca3af;padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer}.xb:hover{border-color:var(--d);color:var(--d)}.nav{background:var(--s);border-bottom:1px solid var(--b);display:flex;padding:0 24px}.nb{padding:14px 16px;background:none;border:none;color:#9ca3af;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}.nb.on,.nb:hover{color:var(--a);border-bottom-color:var(--a)}.pg{display:none;padding:24px;max-width:1060px;margin:0 auto}.pg.on{display:block}.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}.sc{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:18px 20px}.sn{font-size:30px;font-weight:700;color:var(--a);font-family:Rajdhani,sans-serif}.sl{font-size:12px;color:#6b7280;margin-top:4px}.st{font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:var(--a);margin-bottom:14px;text-transform:uppercase}.sb2{background:#0d1017;border:1px solid var(--b);border-radius:8px;padding:8px 14px;color:#e8eaf0;font-size:13px;outline:none;width:100%;max-width:300px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;padding:9px 12px;color:#6b7280;font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--b)}td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}tr:hover td{background:rgba(255,255,255,.015)}.av{width:30px;height:30px;border-radius:50%;object-fit:cover}.rp{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}.r0{background:rgba(156,163,175,.12);color:#9ca3af}.r1{background:rgba(34,197,94,.12);color:#4ade80}.r2{background:rgba(59,130,246,.12);color:#60a5fa}.r3{background:rgba(168,85,247,.12);color:#c084fc}.r4{background:rgba(240,154,0,.15);color:#ffb830}.ab{background:none;border:1px solid var(--b);color:#9ca3af;padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer}.ab:hover{border-color:var(--d);color:var(--d)}.pt{width:44px;height:44px;object-fit:cover;border-radius:6px}.fc{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer}.fc.un{border-color:rgba(240,154,0,.3);background:#13160f}.ft{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px}.cp{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}.cp.suggerimento{background:rgba(88,101,242,.15);color:#8891f2}.cp.bug{background:rgba(239,68,68,.15);color:#f87171}.cp.complimento{background:rgba(240,154,0,.15);color:#ffb830}.cp.altro{background:rgba(107,114,128,.15);color:#9ca3af}.fm{font-size:11px;color:#6b7280;text-align:right;line-height:1.7}.fx{font-size:14px;color:#d1d5db;line-height:1.6}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--a);margin-right:5px}.filt{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}.fb{padding:4px 12px;border-radius:20px;border:1px solid var(--b);background:none;color:#9ca3af;font-size:12px;font-weight:600;cursor:pointer}.fb.on,.fb:hover{border-color:var(--a);color:var(--a)}.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center}.ov.on{display:flex}.ob{background:#13172a;border:1px solid var(--b);border-radius:14px;padding:28px;text-align:center;max-width:320px;width:90%}.ob h3{font-family:Rajdhani,sans-serif;font-size:20px;margin-bottom:8px;color:#f87171}.ob p{font-size:13px;color:#9ca3af;margin-bottom:20px}.cbs{display:flex;gap:8px}.cd{flex:1;padding:10px;border:none;border-radius:8px;background:var(--d);color:#fff;font-weight:700;cursor:pointer}.cc{flex:1;padding:10px;border:1px solid var(--b);border-radius:8px;background:none;color:#9ca3af;cursor:pointer}.empty{text-align:center;padding:40px;color:#4b5268;font-size:14px}`;
+
+  const JS = `
+var tok=sessionStorage.getItem('at')||'';
+var AU=[],AP=[],AF=[],ff='tutti',PA=null;
+function ah(){return{'x-admin-token':tok,'Content-Type':'application/json'};}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):'';}
+function ge(id){return document.getElementById(id);}
+
+async function doLogin(){
+  var pw=ge('PW').value,lb=ge('LB'),le=ge('LE');
+  if(!pw){le.textContent='Inserisci la password';return;}
+  lb.textContent='...';lb.disabled=true;
+  try{
+    var r=await fetch('/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    if(r.ok){var d=await r.json();tok=d.adminToken;sessionStorage.setItem('at',tok);showPanel();}
+    else{le.textContent='Password errata';}
+  }catch(e){le.textContent='Errore: '+e.message;}
+  lb.textContent='Accedi';lb.disabled=false;
+}
+function doLogout(){sessionStorage.removeItem('at');tok='';ge('LP').style.display='flex';ge('AP').style.display='none';}
+function showPanel(){ge('LP').style.display='none';ge('AP').style.display='block';loadAll();}
+function showTab(btn,n){
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  for(var i=0;i<4;i++)ge('T'+i).classList.remove('on');
+  ge('T'+n).classList.add('on');
+}
+function loadAll(){loadStats();loadUsers();loadPosts();loadFeedback();}
+
+async function loadStats(){
+  var r=await fetch('/admin/stats',{headers:ah()});if(!r.ok)return;
+  var s=await r.json();
+  ge('SG').innerHTML=sc('&#128101;',s.users,'Utenti')+sc('&#128444;',s.posts,'Post')+sc('&#128172;',s.comments,'Commenti')+sc('&#128235;',s.feedbacks,'Feedback')+sc('&#128308;',s.unreadFeedback,'Non letti');
+  var rp=await fetch('/admin/posts',{headers:ah()});
+  var posts=(await rp.json()).slice(0,6);
+  ge('RP').innerHTML=posts.map(function(p){
+    var img=p.image?'<img src="'+p.image+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px">':'<div style="width:44px;height:44px;background:#1a1e2e;border-radius:6px"></div>';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--s);border-radius:10px;margin-bottom:8px;border:1px solid var(--b)">'+img+'<div><div style="font-weight:600;font-size:14px">'+esc(p.title)+'</div><div style="font-size:12px;color:#6b7280">Di '+esc(p.author)+'</div></div><button class="ab" style="margin-left:auto" onclick="delPost('+p.id+')">&#128465;</button></div>';
+  }).join('');
+}
+function sc(icon,num,lbl){return '<div class="sc"><div class="sn">'+num+'</div><div class="sl">'+icon+' '+lbl+'</div></div>';}
+
+async function loadUsers(){
+  var r=await fetch('/admin/users',{headers:ah()});if(!r.ok)return;
+  AU=await r.json();renderUsers(AU);
+}
+function filterUsers(){var q=ge('US').value.toLowerCase();renderUsers(AU.filter(function(u){return u.username.toLowerCase().indexOf(q)>=0;}));}
+function renderUsers(list){
+  var RC=['r0','r1','r2','r3','r4'];
+  var CI={hunter:'&#127985;',guardian:'&#128737;',warrior:'&#9876;',fighter:'&#129354;'};
+  ge('UT').innerHTML=list.map(function(u){
+    return '<tr><td><img class="av" src="'+(u.profileImage||'/uploads/default-avatar.png')+'"></td><td><strong>'+esc(u.username)+'</strong></td><td>'+(CI[u.userClass]||'?')+' '+cap(u.userClass||'')+'</td><td><span class="rp '+RC[u.tier||0]+'">'+esc(u.rank||'Player')+'</span></td><td>'+u.level+'</td><td>'+u.totalPosts+'</td><td style="color:#4ade80">'+u.totalUps+'</td><td><button class="ab" onclick="delUser(this)" data-u="'+esc(u.username)+'">&#128465; Elimina</button></td></tr>';
+  }).join('')||'<tr><td colspan="8" class="empty">Nessun utente</td></tr>';
+  ge('UT').querySelectorAll('[data-u]').forEach(function(b){b.onclick=function(){delUser2(this.dataset.u);};});
+}
+
+async function loadPosts(){
+  var r=await fetch('/admin/posts',{headers:ah()});if(!r.ok)return;
+  AP=await r.json();renderPosts(AP);
+}
+function filterPosts(){var q=ge('PS').value.toLowerCase();renderPosts(AP.filter(function(p){return(p.title||'').toLowerCase().indexOf(q)>=0||(p.author||'').toLowerCase().indexOf(q)>=0;}));}
+function renderPosts(list){
+  ge('PT').innerHTML=list.map(function(p){
+    return '<tr><td>'+(p.image?'<img class="pt" src="'+p.image+'">'  :'—')+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">'+esc(p.title||'—')+'</td><td>'+esc(p.author)+'</td><td style="color:#6b7280">'+new Date(p.createdAt).toLocaleDateString('it')+'</td><td><button class="ab" data-pid="'+p.id+'" onclick="delPost2(this.dataset.pid)">&#128465;</button></td></tr>';
+  }).join('')||'<tr><td colspan="5" class="empty">Nessun post</td></tr>';
+}
+
+async function loadFeedback(){
+  var r=await fetch('/admin/feedback-list',{headers:ah()});if(!r.ok)return;
+  AF=await r.json();renderFeedback();
+}
+function renderFbFilters(){
+  ge('FF').innerHTML=['tutti','suggerimento','bug','complimento','altro'].map(function(c){
+    return '<button class="fb'+(c===ff?' on':'')+'" onclick="setFF(this)" data-f="'+c+'">'+cap(c)+'</button>';
+  }).join('');
+  ge('FF').querySelectorAll('[data-f]').forEach(function(b){b.onclick=function(){setFF2(this.dataset.f);};});
+}
+function setFF2(f){ff=f;renderFeedback();}
+function renderFeedback(){
+  renderFbFilters();
+  var list=ff==='tutti'?AF:AF.filter(function(x){return x.category===ff;});
+  if(!list.length){ge('FL').innerHTML='<div class="empty">Nessun feedback.</div>';return;}
+  ge('FL').innerHTML=list.map(function(f){
+    var dot=f.read?'':'<span class="dot"></span>';
+    return '<div class="fc'+(f.read?''  :' un')+'" data-id="'+f._id+'"><div class="ft"><span class="cp '+f.category+'">'+dot+cap(f.category)+'</span><div class="fm">'+esc(f.username)+'<br>'+new Date(f.createdAt).toLocaleString('it')+'</div></div><div class="fx">'+esc(f.text)+'</div></div>';
+  }).join('');
+  ge('FL').querySelectorAll('[data-id]').forEach(function(el){el.onclick=function(){markRead(this.dataset.id,this);};});
+}
+async function markRead(id,el){
+  await fetch('/admin/feedback/'+id+'/read?key=x',{method:'POST',headers:ah()});
+  el.classList.remove('un');
+  var f=AF.find(function(x){return x._id===id;});if(f)f.read=true;
+}
+async function markAllRead(){for(var i=0;i<AF.length;i++){if(!AF[i].read)await markRead(AF[i]._id,{classList:{remove:function(){}}});}loadFeedback();}
+
+function delUser2(username){PA=async function(){await fetch('/admin/users/'+encodeURIComponent(username),{method:'DELETE',headers:ah()});loadUsers();loadStats();};showConfirm('Elimina Utente','Eliminare @'+username+' e tutti i suoi contenuti?');}
+function delPost2(id){PA=async function(){await fetch('/admin/posts/'+id,{method:'DELETE',headers:ah()});loadPosts();loadStats();};showConfirm('Elimina Post','Eliminare questo post?');}
+function showConfirm(t,m){ge('CT').textContent=t;ge('CM').textContent=m;ge('OV').classList.add('on');}
+async function confirmYes(){closeConfirm();if(PA){await PA();PA=null;}}
+function closeConfirm(){ge('OV').classList.remove('on');}
+
+ge('PW').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+if(tok)showPanel();
+`;
+
   res.send(`<!DOCTYPE html>
 <html lang="it"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🏹 Admin — Hunters Universe</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:#090b11;color:#e8eaf0;min-height:100vh}
-:root{--accent:#f09a00;--accent2:#ff6b35;--surface:#10131c;--surface2:#13172a;--border:rgba(255,255,255,0.07);--danger:#ef4444;--success:#22c55e}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.logo{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--accent);letter-spacing:1px}
-.logout-btn{background:none;border:1px solid var(--border);color:#9ca3af;padding:5px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s}
-.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
-.page{display:none;padding:28px;max-width:1100px;margin:0 auto}
-.page.active{display:block}
-/* LOGIN */
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:360px;text-align:center}
-.login-icon{font-size:48px;margin-bottom:16px}
-.login-title{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--accent);margin-bottom:6px}
-.login-sub{color:#6b7280;font-size:13px;margin-bottom:28px}
-.inp{width:100%;background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:#e8eaf0;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:14px}
-.inp:focus{border-color:var(--accent)}
-.btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
-.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
-.err{color:#f87171;font-size:13px;margin-top:10px}
-/* NAV */
-.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:4px;overflow-x:auto}
-.nav-btn{padding:14px 18px;background:none;border:none;color:#9ca3af;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
-.nav-btn.active,.nav-btn:hover{color:var(--accent);border-bottom-color:var(--accent)}
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:28px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
-.stat-num{font-size:32px;font-weight:700;color:var(--accent);font-family:'Rajdhani',sans-serif}
-.stat-label{font-size:12px;color:#6b7280;margin-top:4px;font-weight:500}
-/* TABLE */
-.section-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
-.search-bar{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:9px 16px;color:#e8eaf0;font-size:13px;outline:none;width:100%;max-width:320px;margin-bottom:16px;transition:border-color .2s}
-.search-bar:focus{border-color:var(--accent)}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:10px 14px;color:#6b7280;font-weight:600;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
-tr:hover td{background:rgba(255,255,255,0.02)}
-.avatar-sm{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
-.rank-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
-.r0{background:rgba(156,163,175,.12);color:#9ca3af}.r1{background:rgba(34,197,94,.12);color:#4ade80}.r2{background:rgba(59,130,246,.12);color:#60a5fa}.r3{background:rgba(168,85,247,.12);color:#c084fc}.r4{background:rgba(240,154,0,.15);color:#ffb830}
-.class-icon{font-size:14px}
-.action-btn{background:none;border:1px solid var(--border);color:#9ca3af;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s}
-.action-btn:hover{border-color:var(--danger);color:var(--danger)}
-/* FEEDBACK */
-.fb-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
-.fb-card.unread{border-color:rgba(240,154,0,.3);background:#13160f}
-.fb-card:hover{border-color:rgba(255,255,255,.15)}
-.fb-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:8px}
-.cat-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.cat-pill.suggerimento{background:rgba(88,101,242,.15);color:#8891f2}
-.cat-pill.bug{background:rgba(239,68,68,.15);color:#f87171}
-.cat-pill.complimento{background:rgba(240,154,0,.15);color:#ffb830}
-.cat-pill.altro{background:rgba(107,114,128,.15);color:#9ca3af}
-.fb-meta{font-size:11px;color:#6b7280;text-align:right;line-height:1.7}
-.fb-text{font-size:14px;color:#d1d5db;line-height:1.6}
-.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px}
-.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.filter-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:none;color:#9ca3af;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
-.filter-btn.active,.filter-btn:hover{border-color:var(--accent);color:var(--accent)}
-.empty{text-align:center;padding:48px;color:#4b5268;font-size:14px}
-.post-thumb{width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
-.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
-.confirm-overlay.show{display:flex}
-.confirm-box{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center;max-width:340px;width:90%}
-.confirm-box h3{font-family:'Rajdhani',sans-serif;font-size:20px;margin-bottom:8px;color:#f87171}
-.confirm-box p{font-size:13px;color:#9ca3af;margin-bottom:22px}
-.confirm-btns{display:flex;gap:10px}
-.btn-danger{flex:1;padding:10px;border:none;border-radius:8px;background:var(--danger);color:white;font-weight:700;cursor:pointer}
-.btn-cancel{flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:none;color:#9ca3af;cursor:pointer}
-.read-all-btn{background:none;border:1px solid var(--border);color:#9ca3af;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s;margin-bottom:16px}
-.read-all-btn:hover{border-color:var(--accent);color:var(--accent)}
-</style></head><body>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Hunters Universe</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>${CSS}</style>
+</head><body>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="login-wrap">
-  <div class="login-card">
-    <div class="login-icon">🏹</div>
-    <div class="login-title">HUNTERS UNIVERSE</div>
-    <div class="login-sub">Pannello di Amministrazione</div>
-    <input id="pwdInput" class="inp" type="password" placeholder="Password admin..." onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="btn btn-primary" onclick="doLogin()">Accedi</button>
-    <div id="loginErr" class="err"></div>
+<div id="LP" class="lw">
+  <div class="lc">
+    <div class="li">🏹</div>
+    <div class="lt">HUNTERS UNIVERSE</div>
+    <div class="ls">Pannello Amministrazione</div>
+    <input id="PW" class="inp" type="password" placeholder="Password admin...">
+    <button id="LB" class="btn" onclick="doLogin()">Accedi</button>
+    <div class="err" id="LE"></div>
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
-<div id="adminPanel" style="display:none">
-  <div class="topbar">
-    <div class="logo">🏹 ADMIN PANEL</div>
-    <button class="logout-btn" onclick="doLogout()">Esci</button>
+<div id="AP" style="display:none">
+  <div class="tb">
+    <div class="logo">🏹 ADMIN</div>
+    <button class="xb" onclick="doLogout()">Esci</button>
   </div>
   <nav class="nav">
-    <button class="nav-btn active" onclick="showTab('dashboard')">📊 Dashboard</button>
-    <button class="nav-btn" onclick="showTab('users')">👥 Utenti</button>
-    <button class="nav-btn" onclick="showTab('posts')">🖼️ Post</button>
-    <button class="nav-btn" onclick="showTab('feedback')">💬 Feedback</button>
+    <button class="nb on" onclick="showTab(this,0)">📊 Dashboard</button>
+    <button class="nb" onclick="showTab(this,1)">👥 Utenti</button>
+    <button class="nb" onclick="showTab(this,2)">🖼️ Post</button>
+    <button class="nb" onclick="showTab(this,3)">💬 Feedback</button>
   </nav>
-
-  <!-- DASHBOARD -->
-  <div id="tab-dashboard" class="page active">
-    <div class="stats-grid" id="statsGrid"></div>
-    <div class="section-title">Ultimi Post</div>
-    <div id="recentPosts"></div>
-  </div>
-
-  <!-- UTENTI -->
-  <div id="tab-users" class="page">
-    <div class="section-title">Gestione Utenti</div>
-    <input class="search-bar" id="userSearch" placeholder="🔍 Cerca username..." oninput="filterUsers()">
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Avatar</th><th>Username</th><th>Classe</th><th>Rank</th>
-          <th>Lv.</th><th>Post</th><th>👍</th><th>Azioni</th>
-        </tr></thead>
-        <tbody id="usersTable"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- POST -->
-  <div id="tab-posts" class="page">
-    <div class="section-title">Gestione Post</div>
-    <input class="search-bar" id="postSearch" placeholder="🔍 Cerca titolo o autore..." oninput="filterPosts()">
-    <div style="overflow-x:auto">
-      <table>
-        <thead><tr>
-          <th>Immagine</th><th>Titolo</th><th>Autore</th><th>Data</th><th>Azioni</th>
-        </tr></thead>
-        <tbody id="postsTable"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- FEEDBACK -->
-  <div id="tab-feedback" class="page">
-    <div class="section-title">Feedback Community</div>
-    <button class="read-all-btn" onclick="markAllRead()">✓ Segna tutti letti</button>
-    <div class="filters" id="fbFilters"></div>
-    <div id="fbList"></div>
-  </div>
+  <div id="T0" class="pg on"><div class="sg" id="SG"></div><div class="st">Ultimi Post</div><div id="RP"></div></div>
+  <div id="T1" class="pg"><div class="st">Utenti</div><input class="sb2" id="US" placeholder="🔍 Cerca username..." oninput="filterUsers()"><div style="overflow-x:auto"><table><thead><tr><th>Avatar</th><th>Username</th><th>Classe</th><th>Rank</th><th>Lv</th><th>Post</th><th>👍</th><th>Azioni</th></tr></thead><tbody id="UT"></tbody></table></div></div>
+  <div id="T2" class="pg"><div class="st">Post</div><input class="sb2" id="PS" placeholder="🔍 Cerca titolo o autore..." oninput="filterPosts()"><div style="overflow-x:auto"><table><thead><tr><th>Img</th><th>Titolo</th><th>Autore</th><th>Data</th><th>Azioni</th></tr></thead><tbody id="PT"></tbody></table></div></div>
+  <div id="T3" class="pg"><div class="st">Feedback</div><button class="ab" style="margin-bottom:14px" onclick="markAllRead()">✓ Tutti letti</button><div class="filt" id="FF"></div><div id="FL"></div></div>
 </div>
 
-<!-- CONFIRM DIALOG -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <h3 id="confirmTitle">Sei sicuro?</h3>
-    <p id="confirmMsg"></p>
-    <div class="confirm-btns">
-      <button class="btn-danger" onclick="confirmYes()">Sì, Elimina</button>
-      <button class="btn-cancel" onclick="closeConfirm()">Annulla</button>
+<div class="ov" id="OV">
+  <div class="ob">
+    <h3 id="CT">Eliminare?</h3>
+    <p id="CM"></p>
+    <div class="cbs">
+      <button class="cd" onclick="confirmYes()">Elimina</button>
+      <button class="cc" onclick="closeConfirm()">Annulla</button>
     </div>
   </div>
 </div>
 
-<script>
-let adminToken = sessionStorage.getItem('adminToken');
-let allUsers = [], allPosts = [], allFeedback = [];
-let pendingAction = null;
-let fbFilter = 'tutti';
-const CLASS_ICONS = {hunter:'🏹',guardian:'🛡️',warrior:'⚔️',fighter:'🥊'};
-
-// ── AUTH ──────────────────────────────────────────────────────────────────────
-async function doLogin() {
-  const btn = document.querySelector('.btn-primary');
-  btn.textContent = '...';
-  btn.disabled = true;
-  try {
-    const pwd = document.getElementById('pwdInput').value;
-    if (!pwd) { document.getElementById('loginErr').textContent = 'Inserisci la password'; btn.textContent='Accedi'; btn.disabled=false; return; }
-    const r = await fetch('/admin/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ password: pwd })
-    });
-    if (r.ok) {
-      const d = await r.json();
-      adminToken = d.adminToken;
-      sessionStorage.setItem('adminToken', adminToken);
-      showPanel();
-    } else {
-      const msg = await r.text();
-      document.getElementById('loginErr').textContent = 'Password errata (' + r.status + ')';
-    }
-  } catch(e) {
-    document.getElementById('loginErr').textContent = 'Errore di rete: ' + e.message;
-  }
-  btn.textContent = 'Accedi';
-  btn.disabled = false;
-}
-function doLogout() { sessionStorage.removeItem('adminToken'); adminToken = null; document.getElementById('loginPage').style.display='flex'; document.getElementById('adminPanel').style.display='none'; }
-function ah() { return { 'x-admin-token': adminToken }; }
-
-// ── PANEL ──────────────────────────────────────────────────────────────────────
-function showPanel() {
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('adminPanel').style.display = 'block';
-  loadDashboard(); loadUsers(); loadPosts(); loadFeedback();
-}
-
-function showTab(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-}
-
-// ── DASHBOARD ──────────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  const r = await fetch('/admin/stats', { headers: ah() });
-  if (!r.ok) return;
-  const s = await r.json();
-  document.getElementById('statsGrid').innerHTML =
-    stat('👥', s.users, 'Utenti') + stat('🖼️', s.posts, 'Post') +
-    stat('💬', s.comments, 'Commenti') + stat('📩', s.feedbacks, 'Feedback') +
-    stat('🔴', s.unreadFeedback, 'Non letti');
-  // Recent posts preview
-  const rp = await fetch('/admin/posts', { headers: ah() });
-  const posts = (await rp.json()).slice(0, 6);
-  document.getElementById('recentPosts').innerHTML = posts.map(p =>
-    '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface);border-radius:10px;margin-bottom:8px;border:1px solid var(--border)">' +
-    (p.image ? '<img src="'+p.image+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '<div style="width:48px;height:48px;background:#1a1e2e;border-radius:6px;"></div>') +
-    '<div><div style="font-weight:600;font-size:14px">'+esc(p.title)+'</div><div style="font-size:12px;color:#6b7280">Di '+esc(p.author)+' · '+new Date(p.createdAt).toLocaleDateString('it')+'</div></div>' +
-    '<button class="action-btn" style="margin-left:auto" onclick="deletePost('+p.id+',\''+esc(p.title)+'\')">🗑️</button></div>'
-  ).join('');
-}
-function stat(icon, num, label) {
-  return '<div class="stat-card"><div class="stat-num">'+num+'</div><div class="stat-label">'+icon+' '+label+'</div></div>';
-}
-
-// ── UTENTI ──────────────────────────────────────────────────────────────────────
-async function loadUsers() {
-  const r = await fetch('/admin/users', { headers: ah() });
-  if (!r.ok) return;
-  allUsers = await r.json();
-  renderUsers(allUsers);
-}
-function filterUsers() {
-  const q = document.getElementById('userSearch').value.toLowerCase();
-  renderUsers(allUsers.filter(u => u.username.toLowerCase().includes(q)));
-}
-function renderUsers(list) {
-  const RANK_COLORS = ['r0','r1','r2','r3','r4'];
-  document.getElementById('usersTable').innerHTML = list.map(u =>
-    '<tr>' +
-    '<td><img class="avatar-sm" src="'+(u.profileImage||'/uploads/default-avatar.png')+'" onerror="this.src=\'/uploads/default-avatar.png\'"></td>' +
-    '<td style="font-weight:600">'+esc(u.username)+'</td>' +
-    '<td><span class="class-icon">'+(CLASS_ICONS[u.userClass]||'❓')+'</span> '+cap(u.userClass||'—')+'</td>' +
-    '<td><span class="rank-pill '+RANK_COLORS[u.tier||0]+'">'+esc(u.rank||'Player')+'</span></td>' +
-    '<td><strong>'+u.level+'</strong></td>' +
-    '<td>'+u.totalPosts+'</td>' +
-    '<td style="color:#4ade80">'+u.totalUps+'</td>' +
-    '<td><button class="action-btn" onclick="deleteUser(\''+esc(u.username)+'\')">🗑️ Elimina</button></td>' +
-    '</tr>'
-  ).join('') || '<tr><td colspan="8" style="text-align:center;color:#4b5268;padding:28px">Nessun utente</td></tr>';
-}
-
-// ── POST ──────────────────────────────────────────────────────────────────────
-async function loadPosts() {
-  const r = await fetch('/admin/posts', { headers: ah() });
-  if (!r.ok) return;
-  allPosts = await r.json();
-  renderPosts(allPosts);
-}
-function filterPosts() {
-  const q = document.getElementById('postSearch').value.toLowerCase();
-  renderPosts(allPosts.filter(p => (p.title||'').toLowerCase().includes(q) || (p.author||'').toLowerCase().includes(q)));
-}
-function renderPosts(list) {
-  document.getElementById('postsTable').innerHTML = list.map(p =>
-    '<tr>' +
-    '<td>'+(p.image?'<img class="post-thumb" src="'+p.image+'">':'—')+'</td>' +
-    '<td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.title||'—')+'</td>' +
-    '<td>'+esc(p.author)+'</td>' +
-    '<td style="color:#6b7280">'+new Date(p.createdAt).toLocaleDateString('it')+'</td>' +
-    '<td><button class="action-btn" onclick="deletePost('+p.id+',\''+esc(p.title)+'\')">🗑️</button></td>' +
-    '</tr>'
-  ).join('') || '<tr><td colspan="5" style="text-align:center;color:#4b5268;padding:28px">Nessun post</td></tr>';
-}
-
-// ── FEEDBACK ──────────────────────────────────────────────────────────────────
-async function loadFeedback() {
-  const r = await fetch('/admin/feedback?key='+encodeURIComponent(sessionStorage.getItem('adminToken')), { headers: ah() });
-  // fallback: usa endpoint con adminAuth
-  const r2 = await fetch('/admin/feedback-list', { headers: ah() });
-  if (r2.ok) { allFeedback = await r2.json(); } else if (r.ok) { allFeedback = await r.json(); }
-  renderFeedback();
-}
-function renderFbFilters() {
-  const cats = ['tutti','suggerimento','bug','complimento','altro'];
-  document.getElementById('fbFilters').innerHTML = cats.map(c =>
-    '<button class="filter-btn'+(c===fbFilter?' active':'')+'" onclick="setFbFilter(\''+c+'\')">'+cap(c)+'</button>'
-  ).join('');
-}
-function setFbFilter(f) { fbFilter = f; renderFeedback(); }
-function renderFeedback() {
-  renderFbFilters();
-  const list = fbFilter === 'tutti' ? allFeedback : allFeedback.filter(f => f.category === fbFilter);
-  if (!list.length) { document.getElementById('fbList').innerHTML = '<div class="empty">Nessun feedback.</div>'; return; }
-  document.getElementById('fbList').innerHTML = list.map(f =>
-    '<div class="fb-card'+(f.read?'':' unread')+'" onclick="markRead(\''+f._id+'\',this)">' +
-    '<div class="fb-top"><span class="cat-pill '+f.category+'">'+(f.read?'':'<span class="dot"></span>')+cap(f.category)+'</span>' +
-    '<div class="fb-meta">👤 '+esc(f.username)+'<br>🕐 '+new Date(f.createdAt).toLocaleString('it')+'</div></div>' +
-    '<div class="fb-text">'+esc(f.text)+'</div></div>'
-  ).join('');
-}
-async function markRead(id, el) {
-  await fetch('/admin/feedback/'+id+'/read?key=__', { method:'POST', headers: ah() });
-  el.classList.remove('unread'); const f = allFeedback.find(f=>f._id===id); if(f)f.read=true;
-}
-async function markAllRead() {
-  for (const f of allFeedback.filter(f=>!f.read)) await markRead(f._id, {classList:{remove:()=>{}}});
-  await loadFeedback();
-}
-
-// ── CONFIRM / DELETE ──────────────────────────────────────────────────────────
-function deleteUser(username) {
-  pendingAction = async () => {
-    await fetch('/admin/users/'+encodeURIComponent(username), { method:'DELETE', headers: ah() });
-    await loadUsers(); await loadDashboard();
-  };
-  showConfirm('Elimina Utente', 'Eliminare @'+username+' e tutti i suoi contenuti?');
-}
-function deletePost(id, title) {
-  pendingAction = async () => {
-    await fetch('/admin/posts/'+id, { method:'DELETE', headers: ah() });
-    await loadPosts(); await loadDashboard();
-  };
-  showConfirm('Elimina Post', 'Eliminare il post "'+title+'"?');
-}
-function showConfirm(title, msg) {
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmMsg').textContent = msg;
-  document.getElementById('confirmOverlay').classList.add('show');
-}
-async function confirmYes() { closeConfirm(); if(pendingAction) { await pendingAction(); pendingAction=null; } }
-function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('show'); }
-
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function cap(s) { return s ? s[0].toUpperCase()+s.slice(1) : ''; }
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-if (adminToken) showPanel();
-</script></body></html>`);
+<script>${JS}</script>
+</body></html>`);
 });
+
 app.get("/admin/feedback", async (req, res) => {
   if (req.query.key !== ADMIN_KEY) return res.status(403).send("Accesso negato");
   res.json(await Feedback.find().sort({ createdAt: -1 }));
