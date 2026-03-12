@@ -843,7 +843,7 @@ async function loadDashboard() {
   const posts = (await rp.json()).slice(0, 6);
   document.getElementById('recentPosts').innerHTML = posts.map(p =>
     '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--surface);border-radius:10px;margin-bottom:8px;border:1px solid var(--border)">' +
-    (p.image ? '<img src="'+p.image+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">' : '<div style="width:48px;height:48px;background:#1a1e2e;border-radius:6px;"></div>') +
+    (p.image ? '<img src="'+p.image+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">' : '<div style="width:48px;height:48px;background:#1a1e2e;border-radius:6px;"></div>') +
     '<div><div style="font-weight:600;font-size:14px">'+esc(p.title)+'</div><div style="font-size:12px;color:#6b7280">Di '+esc(p.author)+' · '+new Date(p.createdAt).toLocaleDateString('it')+'</div></div>' +
     '<button class="action-btn" style="margin-left:auto" onclick="deletePost('+p.id+',\''+esc(p.title)+'\')">🗑️</button></div>'
   ).join('');
@@ -893,7 +893,7 @@ function filterPosts() {
 function renderPosts(list) {
   document.getElementById('postsTable').innerHTML = list.map(p =>
     '<tr>' +
-    '<td>'+(p.image?'<img class="post-thumb" src="'+p.image+'" onerror="this.style.display='none'">':'—')+'</td>' +
+    '<td>'+(p.image?'<img class="post-thumb" src="'+p.image+'">':'—')+'</td>' +
     '<td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.title||'—')+'</td>' +
     '<td>'+esc(p.author)+'</td>' +
     '<td style="color:#6b7280">'+new Date(p.createdAt).toLocaleDateString('it')+'</td>' +
