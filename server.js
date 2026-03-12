@@ -103,6 +103,48 @@ const FeedbackSchema = new mongoose.Schema({
   read:      { type: Boolean, default: false }
 });
 
+const NotificationSchema = new mongoose.Schema({
+  to:        String,
+  from:      String,
+  type:      String, // "comment" | "reaction" | "friend_request" | "friend_accept" | "mention"
+  postId:    Number,
+  postTitle: String,
+  message:   String,
+  read:      { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const SavedPostSchema = new mongoose.Schema({
+  username: String,
+  postId:   Number,
+  savedAt:  { type: Date, default: Date.now }
+});
+
+// ── CLAN ─────────────────────────────────────────────────────────────────────
+const ClanSchema = new mongoose.Schema({
+  name:        { type: String, required: true, unique: true },
+  tag:         { type: String, required: true, unique: true, maxlength: 5 },
+  description: { type: String, default: "" },
+  leader:      String,
+  members:     { type: [String], default: [] },
+  image:       { type: String, default: "" },
+  cloudinaryId:{ type: String, default: "" },
+  createdAt:   { type: Date, default: Date.now }
+});
+
+const UserAchievementSchema = new mongoose.Schema({
+  username:      String,
+  achievementId: String,
+  unlockedAt:    { type: Date, default: Date.now }
+});
+
+const ClanMessageSchema = new mongoose.Schema({
+  clanName:  String,
+  author:    String,
+  text:      String,
+  createdAt: { type: Date, default: Date.now }
+});
+
 const User           = mongoose.model("User",           UserSchema);
 const Post           = mongoose.model("Post",           PostSchema);
 const Friend         = mongoose.model("Friend",         FriendSchema);
@@ -111,6 +153,128 @@ const Reaction       = mongoose.model("Reaction",       ReactionSchema);
 const PostReaction   = mongoose.model("PostReaction",   PostReactionSchema);
 const DeletedComment = mongoose.model("DeletedComment", DeletedCommentSchema);
 const Feedback       = mongoose.model("Feedback",       FeedbackSchema);
+const Notification   = mongoose.model("Notification",   NotificationSchema);
+const SavedPost        = mongoose.model("SavedPost",      SavedPostSchema);
+const Clan             = mongoose.model("Clan",           ClanSchema);
+const UserAchievement  = mongoose.model("UserAchievement",UserAchievementSchema);
+const ClanMessage      = mongoose.model("ClanMessage",     ClanMessageSchema);
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+
+function calcLevel(totalUps, totalPosts) {
+  return Math.max(1, Math.floor(totalUps / 5 + totalPosts * 2));
+}
+
+function getRank(level, userClass) {
+  const c = userClass || "hunter";
+  const RANKS = {
+    hunter:   ["Player 🏹", "Hunter 🏹",          "Supreme Hunter 🏹",   "Ultimate Hunter 🏹",   "Supreme Predator 🏹"],
+    guardian: ["Player 🛡️", "Guardian 🛡️",        "Supreme Guardian 🛡️", "Ultimate Guardian 🛡️", "Bloodline Leader 🛡️"],
+    warrior:  ["Player ⚔️", "Warrior ⚔️",          "Supreme Warrior ⚔️",  "Ultimate Warrior ⚔️",  "Vanquisher Warrior ⚔️"],
+    fighter:  ["Player 🥊", "Fighter 🥊",           "Supreme Fighter 🥊",  "Ultimate Fighter 🥊",  "Paramount Archer 🥊"],
+  };
+  const ICONS = { hunter:"🏹", guardian:"🛡️", warrior:"⚔️", fighter:"🥊" };
+  const ranks = RANKS[c] || RANKS.hunter;
+  let tier = level < 20 ? 0 : level < 40 ? 1 : level < 80 ? 2 : level < 130 ? 3 : 4;
+  return { rank: ranks[tier], icon: ICONS[c], level, tier };
+}
+
+async function getUserStats(username) {
+  const posts    = await Post.find({ author: username });
+  const comments = await Comment.find({ author: username });
+  // Escludi le reazioni dell'utente stesso ai propri commenti
+  const reactions = await Reaction.find({
+    commentId: { $in: comments.map(c => c.id) },
+    username:  { $ne: username }   // ← non contare self-reactions
+  });
+  // Escludi le reazioni dell'utente stesso ai propri post
+  const postReacts = await PostReaction.find({
+    postId:   { $in: posts.map(p => p.id) },
+    username: { $ne: username }    // ← non contare self-reactions
+  });
+  const totalUps   = reactions.filter(r => r.reaction === "up").length   + postReacts.filter(r => r.reaction === "up").length;
+  const totalDowns = reactions.filter(r => r.reaction === "down").length + postReacts.filter(r => r.reaction === "down").length;
+  const level = calcLevel(totalUps, posts.length);
+  return { totalUps, totalDowns, totalPosts: posts.length, level };
+}
+
+async function createNotif(to, from, type, postId, postTitle, message) {
+  if (to === from) return;
+  await Notification.create({ to, from, type, postId: postId||0, postTitle: postTitle||"", message });
+}
+
+// ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+const ACHIEVEMENTS_DEF = [
+  { id: "first_post",    name: "Primo Post",      desc: "Pubblica il tuo primo post",   icon: "📝" },
+  { id: "ten_posts",     name: "Prolifico",       desc: "10 post pubblicati",           icon: "📚" },
+  { id: "first_like",    name: "Apprezzato",      desc: "Ricevi il tuo primo like",     icon: "⭐" },
+  { id: "hundred_ups",   name: "Leggenda",        desc: "100 like ricevuti",            icon: "🌟" },
+  { id: "first_friend",  name: "Socializzatore",  desc: "Fai il tuo primo amico",       icon: "🤝" },
+  { id: "ten_friends",   name: "Popolare",        desc: "Raggiungi 10 amici",           icon: "👥" },
+  { id: "level_20",      name: "Veterano",        desc: "Raggiungi il livello 20",      icon: "🎖️" },
+  { id: "level_40",      name: "Elite",           desc: "Raggiungi il livello 40",      icon: "💎" },
+  { id: "first_comment", name: "Commentatore",    desc: "Scrivi il tuo primo commento", icon: "💬" },
+  { id: "join_clan",     name: "Membro del Clan", desc: "Unisciti a un clan",           icon: "🏰" },
+  { id: "create_clan",   name: "Fondatore",       desc: "Crea un clan",                 icon: "👑" },
+];
+
+async function checkAndGrantAchievements(username) {
+  const stats    = await getUserStats(username);
+  const posts    = await Post.find({ author: username });
+  const comments = await Comment.find({ author: username });
+  const friends  = await Friend.find({ $or: [{ from: username, status: "accepted" }, { to: username, status: "accepted" }] });
+  const clan     = await Clan.findOne({ members: username });
+  const isLeader = clan && clan.leader === username;
+
+  const totalUsers = await User.countDocuments();
+  const reactions  = await PostReaction.find({ username });
+  const conditions = {
+    first_post:         posts.length >= 1,
+    five_posts:         posts.length >= 5,
+    ten_posts:          posts.length >= 10,
+    fifty_posts:        posts.length >= 50,
+    first_like:         stats.totalUps >= 1,
+    ten_ups:            stats.totalUps >= 10,
+    fifty_ups:          stats.totalUps >= 50,
+    hundred_ups:        stats.totalUps >= 100,
+    fivehundred_ups:    stats.totalUps >= 500,
+    first_comment:      comments.length >= 1,
+    ten_comments:       comments.length >= 10,
+    fifty_comments:     comments.length >= 50,
+    first_friend:       friends.length >= 1,
+    five_friends:       friends.length >= 5,
+    ten_friends:        friends.length >= 10,
+    twentyfive_friends: friends.length >= 25,
+    level_20:           stats.level >= 20,
+    level_40:           stats.level >= 40,
+    level_80:           stats.level >= 80,
+    level_130:          stats.level >= 130,
+    join_clan:          !!clan,
+    create_clan:        !!isLeader,
+    first_reaction:     reactions.length >= 1,
+    early_adopter:      totalUsers <= 50,
+  };
+
+  const existing = await UserAchievement.find({ username });
+  const existingIds = new Set(existing.map(a => a.achievementId));
+  const newlyUnlocked = [];
+
+  for (const [id, met] of Object.entries(conditions)) {
+    if (met && !existingIds.has(id)) {
+      await UserAchievement.create({ username, achievementId: id });
+      const def = ACHIEVEMENTS_DEF.find(a => a.id === id);
+      if (def) {
+        newlyUnlocked.push(def);
+        await createNotif(username, "system", "achievement", 0, "", `🏆 Hai sbloccato l'achievement: ${def.icon} ${def.name}!`);
+      }
+    }
+  }
+  return newlyUnlocked;
+}
+
+function parseMentions(text) {
+  return [...new Set((text.match(/@(\w+)/g) || []).map(m => m.slice(1)))];
+}
 
 // ── MIDDLEWARE ────────────────────────────────────────────────────────────────
 app.use(cors());
@@ -152,10 +316,14 @@ app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(401).send("Inserisci tutti i dati");
   const user = await User.findOne({ username });
-  if (!user) return res.status(401).send("Username errato");
-  if (!await bcrypt.compare(password, user.password)) return res.status(401).send("Password errata");
-  const token = jwt.sign({ username: user.username }, SECRET);
-  res.json({ token, username: user.username, profileImage: user.profileImage });
+  if (!user || !await bcrypt.compare(password, user.password)) return res.status(401).send("Credenziali errate");
+  const stats = await getUserStats(username);
+  const rankInfo = getRank(stats.level, user.userClass);
+  const userClan = await Clan.findOne({ members: username });
+  const token = jwt.sign({ username }, SECRET);
+  res.json({ token, username, profileImage: user.profileImage, bio: user.bio,
+    userClass: user.userClass, classChosen: user.classChosen, ...stats, ...rankInfo,
+    clanTag: userClan ? userClan.tag : null, clanName: userClan ? userClan.name : null });
 });
 
 app.post("/update-profile", auth, upload.single("profileImage"), async (req, res) => {
@@ -189,7 +357,23 @@ app.post("/update-profile", auth, upload.single("profileImage"), async (req, res
   const stats = await getUserStats(user.username);
   const rankInfo = getRank(stats.level, user.userClass);
   const token = jwt.sign({ username: user.username }, SECRET);
-  res.json({ token, username: user.username, profileImage: user.profileImage });
+  const updatedClan = await Clan.findOne({ members: user.username });
+  res.json({ token, username: user.username, profileImage: user.profileImage, bio: user.bio,
+    userClass: user.userClass, classChosen: user.classChosen, ...stats, ...rankInfo,
+    clanTag: updatedClan ? updatedClan.tag : null, clanName: updatedClan ? updatedClan.name : null });
+});
+
+// Scelta classe
+app.post("/user/class", auth, async (req, res) => {
+  const { userClass } = req.body;
+  if (!["hunter","guardian","warrior","fighter"].includes(userClass))
+    return res.status(400).send("Classe non valida");
+  const user = await User.findOne({ username: req.user.username });
+  if (!user) return res.status(404).send();
+  user.userClass = userClass;
+  user.classChosen = true;
+  await user.save();
+  res.json({ ok: true, userClass });
 });
 
 // ── POSTS ─────────────────────────────────────────────────────────────────────
@@ -252,6 +436,38 @@ app.delete("/posts/:id", auth, async (req, res) => {
     await SavedPost.deleteMany({ postId: Number(req.params.id) });
   }
   res.send("ok");
+});
+
+// Reazione ai post
+app.post("/posts/:id/react", auth, async (req, res) => {
+  const { reaction } = req.body;
+  if (!["up","down"].includes(reaction)) return res.status(400).send();
+  const username = req.user.username, postId = Number(req.params.id);
+  const existing = await PostReaction.findOne({ postId, username });
+  if (existing) {
+    if (existing.reaction === reaction) await PostReaction.deleteOne({ _id: existing._id });
+    else { existing.reaction = reaction; await existing.save(); }
+  } else {
+    await PostReaction.create({ postId, username, reaction });
+    if (reaction === "up") {
+      const post = await Post.findOne({ id: postId });
+      if (post) await createNotif(post.author, username, "reaction", postId, post.title, `${username} ha messo 👍 al tuo post "${post.title}"`);
+      // Check achievements for both reactor and post author
+      checkAndGrantAchievements(username).catch(() => {});
+      if (post) checkAndGrantAchievements(post.author).catch(() => {});
+    }
+  }
+  const pr = await PostReaction.find({ postId });
+  res.json({ postUps: pr.filter(r=>r.reaction==="up").length, postDowns: pr.filter(r=>r.reaction==="down").length,
+    myPostReaction: (pr.find(r=>r.username===username)||{}).reaction||null });
+});
+
+// Salva post
+app.post("/posts/:id/save", auth, async (req, res) => {
+  const username = req.user.username, postId = Number(req.params.id);
+  const existing = await SavedPost.findOne({ username, postId });
+  if (existing) { await SavedPost.deleteOne({ _id: existing._id }); res.json({ saved: false }); }
+  else           { await SavedPost.create({ username, postId });     res.json({ saved: true });  }
 });
 
 // ── COMMENTI ──────────────────────────────────────────────────────────────────
@@ -344,17 +560,14 @@ app.get("/users/profile/:username", async (req, res) => {
   const user = await User.findOne({ username: req.params.username });
   if (!user) return res.status(404).send();
   const posts    = await Post.find({ author: req.params.username }).sort({ id: 1 });
-  const comments = await Comment.find({ author: req.params.username });
-  const ids      = comments.map(c => c.id);
-  const reactions = await Reaction.find({ commentId: { $in: ids } });
-
-  res.json({
-    username:     user.username,
-    profileImage: user.profileImage,
-    posts,
-    totalUps:   reactions.filter(r => r.reaction === "up").length,
-    totalDowns: reactions.filter(r => r.reaction === "down").length
-  });
+  const stats    = await getUserStats(req.params.username);
+  const rankInfo = getRank(stats.level, user.userClass);
+  const profileClan = await Clan.findOne({ members: req.params.username });
+  res.json({ username: user.username, profileImage: user.profileImage, bio: user.bio,
+    userClass: user.userClass, posts, ...stats, ...rankInfo,
+    clanTag: profileClan ? profileClan.tag : null,
+    clanName: profileClan ? profileClan.name : null,
+    clanImage: profileClan ? profileClan.image : null });
 });
 
 app.get("/users/search", auth, async (req, res) => {
@@ -507,6 +720,92 @@ app.post("/clan/kick", auth, async (req, res) => {
   clan.members = clan.members.filter(m => m !== username);
   await clan.save();
   res.json({ ok: true });
+});
+
+// ── CLAN (additional endpoints) ──────────────────────────────────────────────
+
+// Edit clan (leader only)
+app.put("/clan/:name", auth, upload.single("image"), async (req, res) => {
+  const clan = await Clan.findOne({ name: req.params.name });
+  if (!clan) return res.status(404).send("Clan non trovato");
+  if (clan.leader !== req.user.username) return res.status(403).send("Solo il leader può modificare");
+  if (req.body.description !== undefined) clan.description = req.body.description.slice(0, 200);
+  if (req.body.newName && req.body.newName !== clan.name) {
+    if (await Clan.findOne({ name: req.body.newName })) return res.status(409).send("Nome già in uso");
+    clan.name = req.body.newName;
+  }
+  if (req.file) {
+    if (clan.cloudinaryId) await cloudinary.uploader.destroy(clan.cloudinaryId).catch(() => {});
+    const up = await uploadToCloudinary(req.file.buffer, "hunters/clans");
+    clan.image = up.url;
+    clan.cloudinaryId = up.public_id;
+  }
+  await clan.save();
+  res.json(clan);
+});
+
+// Clan chat
+app.get("/clan/:name/messages", auth, async (req, res) => {
+  const clan = await Clan.findOne({ name: req.params.name });
+  if (!clan) return res.status(404).send();
+  if (!clan.members.includes(req.user.username)) return res.status(403).send("Non sei membro");
+  const msgs = await ClanMessage.find({ clanName: req.params.name }).sort({ createdAt: -1 }).limit(50);
+  res.json(msgs.reverse());
+});
+
+app.post("/clan/:name/messages", auth, async (req, res) => {
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).send("Messaggio vuoto");
+  const clan = await Clan.findOne({ name: req.params.name });
+  if (!clan) return res.status(404).send();
+  if (!clan.members.includes(req.user.username)) return res.status(403).send("Non sei membro");
+  const msg = await ClanMessage.create({ clanName: req.params.name, author: req.user.username, text: text.trim() });
+  res.json(msg);
+});
+
+// ── LEADERBOARD ───────────────────────────────────────────────────────────────
+
+app.get("/leaderboard/weekly", async (req, res) => {
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // Reactions ai post nella settimana
+  const postReacts = await PostReaction.find({ reaction: "up" });
+  // Reactions ai commenti nella settimana  
+  const commentReacts = await Reaction.find({ reaction: "up" });
+  // Aggrega per autore del post/commento
+  const upMap = {};
+  for (const r of postReacts) {
+    const post = await Post.findOne({ id: r.postId });
+    if (post && post.author !== r.username) {
+      upMap[post.author] = (upMap[post.author] || 0) + 1;
+    }
+  }
+  for (const r of commentReacts) {
+    const comment = await Comment.findOne({ id: r.commentId });
+    if (comment && comment.author !== r.username) {
+      upMap[comment.author] = (upMap[comment.author] || 0) + 1;
+    }
+  }
+  const sorted = Object.entries(upMap).sort((a,b) => b[1]-a[1]).slice(0,10);
+  const result = await Promise.all(sorted.map(async ([username, ups]) => {
+    const user = await User.findOne({ username });
+    const stats = await getUserStats(username);
+    const rankInfo = getRank(stats.level, user?.userClass);
+    return { username, ups, profileImage: user?.profileImage||"", ...rankInfo };
+  }));
+  res.json(result);
+});
+
+// ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+
+app.get("/users/:username/achievements", async (req, res) => {
+  const unlocked = await UserAchievement.find({ username: req.params.username });
+  const unlockedIds = new Set(unlocked.map(a => a.achievementId));
+  const result = ACHIEVEMENTS_DEF.map(a => ({
+    ...a,
+    unlocked: unlockedIds.has(a.id),
+    unlockedAt: unlocked.find(u => u.achievementId === a.id)?.unlockedAt || null
+  }));
+  res.json(result);
 });
 
 // ── FEEDBACK ─────────────────────────────────────────────────────────────────
