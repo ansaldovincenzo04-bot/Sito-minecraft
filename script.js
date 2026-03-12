@@ -694,7 +694,7 @@ async function loadPosts(search) {
     for (const post of filtered) {
         let commentCount = 0;
         try {
-            const cr = await fetch(\`/posts/\${post.id}/comments\`);
+            const cr = await fetch(`/posts/${post.id}/comments`);
             const cs = await cr.json();
             commentCount = cs.length;
         } catch {}
@@ -729,7 +729,7 @@ async function loadPosts(search) {
             btn.onclick = async (e) => {
                 e.stopPropagation();
                 if (!token) return showAlert("Accedi per reagire");
-                const r = await fetch(\`/posts/\${btn.dataset.pid}/react\`, {
+                const r = await fetch(`/posts/${btn.dataset.pid}/react`, {
                     method: "POST",
                     headers: { "Authorization": token, "Content-Type": "application/json" },
                     body: JSON.stringify({ reaction: btn.dataset.r })
@@ -743,7 +743,7 @@ async function loadPosts(search) {
         if (saveBtn) saveBtn.onclick = async (e) => {
             e.stopPropagation();
             if (!token) return showAlert("Accedi per salvare i post");
-            const r = await fetch(\`/posts/\${saveBtn.dataset.save}/save\`, {
+            const r = await fetch(`/posts/${saveBtn.dataset.save}/save`, {
                 method: "POST", headers: { "Authorization": token }
             });
             if (r.ok) loadPosts(search);

@@ -1172,7 +1172,7 @@ body.light-theme ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 .link-preview-body { padding: 10px 10px 10px 0; flex: 1; min-width: 0; }
 .link-preview-domain { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
 .link-preview-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.link-preview-desc { font-size: 11px; color: var(--text-dim); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.link-preview-desc { font-size: 11px; color: var(--text-dim); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
 
 /* ══════════════════════════════════════════════════════
    LEVEL PROGRESS BAR (nel profilo panel)
